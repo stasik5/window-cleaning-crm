@@ -763,7 +763,7 @@ export default function WindowCleaningCRM() {
 
   useEffect(() => {
     fetchClients()
-  }, [searchTerm, ratingFilter, sortBy, sortOrder])
+  }, [searchTerm, ratingFilter, sortBy, sortOrder, dbStatus.isConnected])
 
   const getColorCoding = (lastJobDate: Date | undefined) => {
     if (!lastJobDate) return "bg-gray-100"
