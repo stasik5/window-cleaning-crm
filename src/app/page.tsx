@@ -711,6 +711,7 @@ export default function WindowCleaningCRM() {
   const fetchClients = async () => {
     if (!dbStatus.isConnected) {
       // Don't try to fetch if database is not connected
+      setLoading(false)
       return
     }
 
