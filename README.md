@@ -234,6 +234,3 @@ This project is licensed under the MIT License.
 ---
 
 Built with ❤️ for window cleaning businesses. Powered by Next.js and Supabase. 🚀
-"# crm5" 
-"# crm5" 
-"# window-cleaning-crm" 

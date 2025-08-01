@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle } from "lucide-react"
+import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle, LogOut } from "lucide-react"
 import { Client } from "@prisma/client"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/components/auth-provider"
 interface ClientWithLastJob extends Client {
   lastJob?: {
     date: Date
@@ -679,6 +680,7 @@ export default function WindowCleaningCRM() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
+  const { user, signOut } = useAuth()
 
   // Fetch clients from API
   const checkDatabaseStatus = async () => {
@@ -1222,6 +1224,24 @@ TOTAL: $${selectedJob.price}
                 <Database className={`h-4 w-4 ${dbStatus.isConnected ? 'text-green-600' : 'text-red-600'}`} />
                 <span>{dbStatus.isConnected ? 'Database Connected' : 'Database Disconnected'}</span>
               </div>
+              
+              {/* User Info & Logout */}
+              {user && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    {user.email}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={signOut}
+                    className="flex items-center gap-1"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
