@@ -2477,7 +2477,7 @@ export default function WindowCleaningCRM() {
                               id="invoice-service-description"
                               value={invoiceData.serviceDescription}
                               onChange={(e) => setInvoiceData({...invoiceData, serviceDescription: e.target.value})}
-                              placeholder="Window Cleaning Service"
+                              placeholder="Profilaktinis langų valymas"
                             />
                           </div>
                           <div>
