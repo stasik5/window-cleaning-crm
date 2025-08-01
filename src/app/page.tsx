@@ -1315,6 +1315,8 @@ export default function WindowCleaningCRM() {
       
       const invoiceDate = formatDate(new Date())
       const invoiceNumber = `INV-${Date.now()}`
+      const serviceDate = formatDate(new Date(selectedJob.date))
+      const paymentDate = invoiceData.paymentDate ? formatDate(new Date(invoiceData.paymentDate)) : ''
       
       iframeDoc.open()
       iframeDoc.write(`
@@ -1334,23 +1336,46 @@ export default function WindowCleaningCRM() {
               width: 210mm;
               padding: 20mm;
             }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 30px;
+            }
+            .company-info {
+              text-align: right;
+              max-width: 50%;
+            }
+            .company-logo {
+              max-width: 120px;
+              max-height: 50px;
+              margin-bottom: 10px;
+            }
             h1 {
               font-size: 24px;
               color: #333333;
               background-color: #ffffff;
               margin: 0;
             }
+            h2 {
+              font-size: 20px;
+              color: #333333;
+              background-color: #ffffff;
+              margin: 0 0 10px 0;
+            }
             p {
               font-size: 12px;
               color: #666666;
               background-color: #ffffff;
-              margin: 5px 0;
+              margin: 2px 0;
             }
             h3 {
               font-size: 14px;
               color: #333333;
               background-color: #ffffff;
               margin: 20px 0 10px 0;
+              padding-bottom: 5px;
+              border-bottom: 1px solid #cccccc;
             }
             table {
               width: 100%;
@@ -1387,31 +1412,84 @@ export default function WindowCleaningCRM() {
               background-color: #ffffff;
               margin: 20px 0;
             }
+            .bank-info {
+              margin: 20px 0;
+              padding: 10px;
+              background-color: #f9f9f9;
+              border: 1px solid #eeeeee;
+            }
+            .bank-info h4 {
+              font-size: 12px;
+              color: #333333;
+              background-color: #f9f9f9;
+              margin: 0 0 8px 0;
+            }
+            .notes {
+              margin: 10px 0;
+              font-size: 10px;
+              color: #666666;
+              background-color: #ffffff;
+            }
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #cccccc;
+            }
           </style>
         </head>
         <body>
-          <h1>${t.invoice}</h1>
-          <p>${t.date}: ${invoiceDate}</p>
-          <p>${t.invoiceNumber}: ${invoiceNumber}</p>
+          <div class="header">
+            <div>
+              <h1>${t.invoice}</h1>
+              <p>${t.date}: ${invoiceDate}</p>
+              <p>${t.invoiceNumber}: ${invoiceNumber}</p>
+            </div>
+            <div class="company-info">
+              ${companySettings.logo ? `<img src="${companySettings.logo}" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">` : ''}
+              <h2>${companySettings.name || 'Your Company'}</h2>
+              ${companySettings.address ? `<p>${companySettings.address.replace(/\n/g, '<br>')}</p>` : ''}
+              ${companySettings.phone ? `<p>Phone: ${companySettings.phone}</p>` : ''}
+              ${companySettings.email ? `<p>Email: ${companySettings.email}</p>` : ''}
+              ${companySettings.website ? `<p>Website: ${companySettings.website}</p>` : ''}
+            </div>
+          </div>
           
           <h3>${t.billTo}</h3>
           <p style="font-weight: bold;">${selectedClientForInvoice.name}</p>
           ${selectedClientForInvoice.address ? `<p>${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
+          ${selectedClientForInvoice.phone ? `<p>${selectedClientForInvoice.phone}</p>` : ''}
+          ${selectedClientForInvoice.email ? `<p>${selectedClientForInvoice.email}</p>` : ''}
           
           <table>
             <tr>
               <th>${t.description}</th>
-              <th>${t.amount}</th>
+              <th>${t.serviceDate}</th>
+              <th style="text-align: right;">${t.amount}</th>
             </tr>
             <tr>
               <td>${invoiceData.serviceDescription || t.windowCleaning}</td>
+              <td>${serviceDate}</td>
               <td style="text-align: right;">$${selectedJob.price}</td>
             </tr>
           </table>
           
+          ${invoiceData.notes ? `<div class="notes"><strong>${t.notes}:</strong> ${invoiceData.notes}</div>` : ''}
+          
           <p class="total">${t.total}: $${selectedJob.price}</p>
           
-          <p class="thank-you">${t.thankYou}</p>
+          ${(companySettings.bankName || companySettings.bankAccount) ? `
+            <div class="bank-info">
+              <h4>${t.bankInfo}</h4>
+              ${companySettings.bankName ? `<p><strong>${t.bankName}:</strong> ${companySettings.bankName}</p>` : ''}
+              ${companySettings.bankAccount ? `<p><strong>${t.account}:</strong> ${companySettings.bankAccount}</p>` : ''}
+              ${companySettings.bankCode ? `<p><strong>${t.bankCode}:</strong> ${companySettings.bankCode}</p>` : ''}
+            </div>
+          ` : ''}
+          
+          <div class="footer">
+            <p class="thank-you">${t.thankYou}</p>
+            ${paymentDate ? `<p>${t.paymentDate} ${paymentDate}</p>` : ''}
+          </div>
         </body>
         </html>
       `)
