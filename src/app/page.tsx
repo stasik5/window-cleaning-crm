@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import jsPDF from "jspdf"
+import * as jsPDF from "jspdf"
 import html2canvas from "html2canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -1229,10 +1229,19 @@ export default function WindowCleaningCRM() {
   }
 
   const generateInvoice = async () => {
-    if (!selectedClientForInvoice) return
+    if (!selectedClientForInvoice) {
+      console.error('No client selected for invoice')
+      return
+    }
     
     const selectedJob = selectedClientForInvoice.jobs?.find(job => job.id === invoiceData.jobId)
-    if (!selectedJob) return
+    if (!selectedJob) {
+      console.error('No job selected for invoice')
+      return
+    }
+
+    console.log('Starting invoice generation for client:', selectedClientForInvoice.name)
+    console.log('Selected job:', selectedJob)
 
     // Language mappings
     const translations = {
@@ -1302,108 +1311,87 @@ export default function WindowCleaningCRM() {
       const paymentDate = invoiceData.paymentDate ? formatDate(new Date(invoiceData.paymentDate)) : ''
       
       // Build HTML content with proper Unicode support
-      invoiceElement.innerHTML = `
-        <div style="font-family: Arial, sans-serif; color: #000;">
-          <!-- Header -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-            <div>
-              <h1 style="font-size: 24px; margin: 0; color: #333;">${t.invoice}</h1>
-              <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.date}: ${invoiceDate}</p>
-              <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.invoiceNumber}: ${invoiceNumber}</p>
-            </div>
-            <div style="text-align: right;">
-              <h2 style="font-size: 20px; margin: 0; color: #333;">${companySettings.name || 'Your Company'}</h2>
-              ${companySettings.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${companySettings.address.replace(/\n/g, '<br>')}</p>` : ''}
-              ${companySettings.phone ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Phone: ${companySettings.phone}</p>` : ''}
-              ${companySettings.email ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Email: ${companySettings.email}</p>` : ''}
-              ${companySettings.website ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Website: ${companySettings.website}</p>` : ''}
-            </div>
-          </div>
+      console.log('Building HTML content...')
+      const simpleHtml = `
+        <div style="font-family: Arial, sans-serif; color: #000; width: 210mm; padding: 20mm; box-sizing: border-box;">
+          <h1 style="font-size: 24px; margin: 0; color: #333;">${t.invoice}</h1>
+          <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.date}: ${invoiceDate}</p>
+          <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.invoiceNumber}: ${invoiceNumber}</p>
           
-          <!-- Bill To Section -->
-          <div style="margin-bottom: 30px;">
-            <h3 style="font-size: 14px; margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">${t.billTo}</h3>
-            <p style="margin: 5px 0; font-size: 12px; color: #333; font-weight: bold;">${selectedClientForInvoice.name}</p>
-            ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
-            ${selectedClientForInvoice.phone ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.phone}</p>` : ''}
-            ${selectedClientForInvoice.email ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.email}</p>` : ''}
-          </div>
+          <h3 style="font-size: 14px; margin: 20px 0 10px 0; color: #333;">${t.billTo}</h3>
+          <p style="margin: 5px 0; font-size: 12px; color: #333; font-weight: bold;">${selectedClientForInvoice.name}</p>
+          ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
           
-          <!-- Service Table -->
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <thead>
-              <tr style="background-color: #f0f0f0;">
-                <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.description}</th>
-                <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.serviceDate}</th>
-                <th style="padding: 8px; text-align: right; font-size: 12px; border: 1px solid #ddd;">${t.amount}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${invoiceData.serviceDescription || t.windowCleaning}</td>
-                <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${serviceDate}</td>
-                <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #ddd;">$${selectedJob.price}</td>
-              </tr>
-            </tbody>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="background-color: #f0f0f0;">
+              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.description}</th>
+              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.amount}</th>
+            </tr>
+            <tr>
+              <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${invoiceData.serviceDescription || t.windowCleaning}</td>
+              <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #ddd;">$${selectedJob.price}</td>
+            </tr>
           </table>
           
-          ${invoiceData.notes ? `<p style="margin: 10px 0; font-size: 10px; color: #666;"><strong>${t.notes}:</strong> ${invoiceData.notes}</p>` : ''}
+          <p style="text-align: right; font-size: 14px; font-weight: bold; color: #333; margin: 20px 0;">${t.total}: $${selectedJob.price}</p>
           
-          <!-- Total -->
-          <div style="text-align: right; margin: 20px 0;">
-            <p style="font-size: 14px; font-weight: bold; color: #333; margin: 0;">${t.total}: $${selectedJob.price}</p>
-          </div>
-          
-          <!-- Bank Information -->
-          ${(companySettings.bankName || companySettings.bankAccount) ? `
-            <div style="margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee;">
-              <h4 style="font-size: 12px; margin: 0 0 8px 0; color: #333;">${t.bankInfo}</h4>
-              ${companySettings.bankName ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.bankName}:</strong> ${companySettings.bankName}</p>` : ''}
-              ${companySettings.bankAccount ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.account}:</strong> ${companySettings.bankAccount}</p>` : ''}
-              ${companySettings.bankCode ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.bankCode}:</strong> ${companySettings.bankCode}</p>` : ''}
-            </div>
-          ` : ''}
-          
-          <!-- Footer -->
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
-            <p style="margin: 5px 0; font-size: 10px; color: #666;">${t.thankYou}</p>
-            ${paymentDate ? `<p style="margin: 5px 0; font-size: 10px; color: #666;">${t.paymentDate} ${paymentDate}</p>` : ''}
-          </div>
+          <p style="margin: 20px 0; font-size: 10px; color: #666;">${t.thankYou}</p>
         </div>
       `
+      
+      invoiceElement.innerHTML = simpleHtml
       
       // Add to document body
       document.body.appendChild(invoiceElement)
       
+      console.log('HTML element created and added to body')
+      
       // Convert to canvas
-      const canvas = await html2canvas(invoiceElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      })
+      console.log('Starting html2canvas conversion...')
+      let canvas
+      try {
+        canvas = await html2canvas(invoiceElement, {
+          scale: 1,
+          logging: false,
+          useCORS: false,
+          allowTaint: false,
+          backgroundColor: '#ffffff'
+        })
+        console.log('html2canvas completed successfully')
+      } catch (html2canvasError) {
+        console.error('html2canvas failed:', html2canvasError)
+        throw new Error(`html2canvas failed: ${html2canvasError instanceof Error ? html2canvasError.message : 'Unknown error'}`)
+      }
       
       // Remove temporary element
       document.body.removeChild(invoiceElement)
       
+      console.log('Creating PDF from canvas...')
       // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF()
-      const imgWidth = 210
-      const pageHeight = 295
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-      let heightLeft = imgHeight
-      
-      let position = 0
-      
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
+      let pdf
+      try {
+        const imgData = canvas.toDataURL('image/png')
+        pdf = new jsPDF.default()
+        const imgWidth = 210
+        const pageHeight = 295
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+        let heightLeft = imgHeight
+        
+        let position = 0
+        
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
         heightLeft -= pageHeight
+        
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
+        console.log('PDF created successfully')
+      } catch (jsPdfError) {
+        console.error('jsPDF failed:', jsPdfError)
+        throw new Error(`jsPDF failed: ${jsPdfError instanceof Error ? jsPdfError.message : 'Unknown error'}`)
       }
       
       // Save the PDF
@@ -1423,11 +1411,14 @@ export default function WindowCleaningCRM() {
       
     } catch (error) {
       console.error('Error generating PDF invoice:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('Error details:', errorMessage)
+      
       toast({
         title: invoiceLanguage === 'lt' ? "Klaida" : "Error",
         description: invoiceLanguage === 'lt' 
-          ? "Nepavyko sugeneruoti PDF sąskaitos. Bandykite dar kartą."
-          : "Failed to generate PDF invoice. Please try again.",
+          ? `Nepavyko sugeneruoti PDF sąskaitos. Klaida: ${errorMessage}`
+          : `Failed to generate PDF invoice. Error: ${errorMessage}`,
         variant: "destructive",
       })
     }
