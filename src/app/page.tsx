@@ -1335,24 +1335,24 @@ export default function WindowCleaningCRM() {
               background-color: #ffffff;
               width: 210mm;
               padding: 20mm;
-              line-height: 1.4;
+              line-height: 1.6;
             }
             .header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
-              margin-bottom: 30px;
-              line-height: 1.4;
+              margin-bottom: 35px;
+              line-height: 1.6;
             }
             .company-info {
               text-align: right;
               max-width: 50%;
-              line-height: 1.4;
+              line-height: 1.6;
             }
             .company-logo {
               max-width: 120px;
               max-height: 50px;
-              margin-bottom: 10px;
+              margin-bottom: 12px;
               display: block;
               margin-left: auto;
             }
@@ -1360,58 +1360,64 @@ export default function WindowCleaningCRM() {
               font-size: 24px;
               color: #333333;
               background-color: #ffffff;
-              margin: 0 0 10px 0;
-              line-height: 1.2;
+              margin: 0 0 12px 0;
+              line-height: 1.3;
+              min-height: 28px;
             }
             h2 {
               font-size: 20px;
               color: #333333;
               background-color: #ffffff;
-              margin: 0 0 10px 0;
-              line-height: 1.2;
+              margin: 0 0 12px 0;
+              line-height: 1.3;
+              min-height: 24px;
             }
             p {
               font-size: 12px;
               color: #666666;
               background-color: #ffffff;
-              margin: 2px 0;
-              line-height: 1.4;
-              min-height: 14px;
+              margin: 3px 0;
+              line-height: 1.6;
+              min-height: 16px;
+              padding: 1px 0;
             }
             h3 {
               font-size: 14px;
               color: #333333;
               background-color: #ffffff;
-              margin: 20px 0 10px 0;
-              padding-bottom: 5px;
+              margin: 25px 0 12px 0;
+              padding-bottom: 6px;
               border-bottom: 1px solid #cccccc;
-              line-height: 1.3;
+              line-height: 1.4;
+              min-height: 18px;
             }
             table {
               width: 100%;
               border-collapse: collapse;
-              margin: 20px 0;
+              margin: 25px 0;
               background-color: #ffffff;
-              line-height: 1.4;
+              line-height: 1.6;
             }
             th {
-              padding: 10px 8px;
+              padding: 12px 10px;
               text-align: left;
               font-size: 12px;
               border: 1px solid #dddddd;
               background-color: #f0f0f0;
               color: #000000;
-              line-height: 1.3;
+              line-height: 1.4;
               font-weight: bold;
+              min-height: 18px;
             }
             td {
-              padding: 10px 8px;
+              padding: 12px 10px;
               font-size: 11px;
               border: 1px solid #dddddd;
               background-color: #ffffff;
               color: #000000;
-              line-height: 1.4;
+              line-height: 1.6;
               vertical-align: top;
+              min-height: 16px;
             }
             .total {
               text-align: right;
@@ -1419,50 +1425,61 @@ export default function WindowCleaningCRM() {
               font-weight: bold;
               color: #333333;
               background-color: #ffffff;
-              margin: 20px 0;
-              line-height: 1.4;
+              margin: 25px 0;
+              line-height: 1.6;
+              min-height: 20px;
+              padding: 5px 0;
             }
             .thank-you {
               font-size: 10px;
               color: #666666;
               background-color: #ffffff;
-              margin: 20px 0;
-              line-height: 1.4;
+              margin: 25px 0;
+              line-height: 1.6;
+              min-height: 14px;
+              padding: 2px 0;
             }
             .bank-info {
-              margin: 20px 0;
-              padding: 15px 10px;
+              margin: 25px 0;
+              padding: 18px 12px;
               background-color: #f9f9f9;
               border: 1px solid #eeeeee;
-              line-height: 1.4;
+              line-height: 1.6;
             }
             .bank-info h4 {
               font-size: 12px;
               color: #333333;
               background-color: #f9f9f9;
-              margin: 0 0 8px 0;
-              line-height: 1.3;
+              margin: 0 0 10px 0;
+              line-height: 1.4;
+              min-height: 16px;
             }
             .bank-info p {
-              margin: 4px 0;
-              line-height: 1.4;
+              margin: 5px 0;
+              line-height: 1.6;
+              min-height: 16px;
+              padding: 1px 0;
             }
             .notes {
-              margin: 15px 0;
+              margin: 18px 0;
               font-size: 10px;
               color: #666666;
               background-color: #ffffff;
-              line-height: 1.4;
+              line-height: 1.6;
+              min-height: 14px;
+              padding: 3px 0;
             }
             .footer {
-              margin-top: 30px;
-              padding-top: 20px;
+              margin-top: 35px;
+              padding-top: 25px;
               border-top: 1px solid #cccccc;
-              line-height: 1.4;
+              line-height: 1.6;
             }
             .footer p {
-              margin: 8px 0;
-              line-height: 1.4;
+              margin: 10px 0;
+              line-height: 1.6;
+              min-height: 14px;
+              padding: 2px 0;
             }
           </style>
         </head>
