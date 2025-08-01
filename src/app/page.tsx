@@ -752,7 +752,7 @@ export default function WindowCleaningCRM() {
     bankAccount: "",
     bankCode: "",
     defaultLanguage: "en",
-    defaultServiceDescription: "Window Cleaning Service"
+    defaultServiceDescription: "Window Cleaning Services"
   })
   const [newClient, setNewClient] = useState({
     name: "",
@@ -1272,7 +1272,7 @@ export default function WindowCleaningCRM() {
         serviceDate: "Data",
         amount: "Suma",
         total: "VISO",
-        windowCleaning: "Langų valymo paslauga",
+        windowCleaning: "Profilaktinis langų valymas",
         notes: "Pastabos",
         thankYou: "Dėkojame, kad pasirinkote mus!",
         bankInfo: "Banko informacija",
@@ -2042,7 +2042,7 @@ export default function WindowCleaningCRM() {
                               id="default-service"
                               value={companySettings.defaultServiceDescription}
                               onChange={(e) => setCompanySettings({...companySettings, defaultServiceDescription: e.target.value})}
-                              placeholder="Profilaktinis langų valymas"
+                              placeholder="Window Cleaning Services"
                             />
                             <p className="text-sm text-gray-500 mt-1">This will be pre-filled when generating invoices</p>
                           </div>
