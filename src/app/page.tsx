@@ -1290,12 +1290,18 @@ export default function WindowCleaningCRM() {
       const invoiceElement = document.createElement('div')
       invoiceElement.style.fontFamily = 'Arial, sans-serif'
       invoiceElement.style.width = '210mm'
-      invoiceElement.style.padding = '20mm'
+      invoiceElement.style.padding = '0'
+      invoiceElement.style.margin = '0'
       invoiceElement.style.boxSizing = 'border-box'
-      invoiceElement.style.backgroundColor = 'white'
+      invoiceElement.style.backgroundColor = '#ffffff'
+      invoiceElement.style.color = '#000000'
       invoiceElement.style.position = 'absolute'
       invoiceElement.style.left = '-9999px'
       invoiceElement.style.top = '-9999px'
+      invoiceElement.style.all = 'initial' // Reset all inherited styles
+      invoiceElement.style.display = 'block' // Reset display
+      invoiceElement.style.fontFamily = 'Arial, sans-serif' // Reset font family
+      invoiceElement.style.color = '#000000' // Reset color
       
       // Format dates in European format dd/mm/yyyy
       const formatDate = (date: Date) => {
@@ -1313,29 +1319,29 @@ export default function WindowCleaningCRM() {
       // Build HTML content with proper Unicode support
       console.log('Building HTML content...')
       const simpleHtml = `
-        <div style="font-family: Arial, sans-serif; color: #000; width: 210mm; padding: 20mm; box-sizing: border-box;">
-          <h1 style="font-size: 24px; margin: 0; color: #333;">${t.invoice}</h1>
-          <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.date}: ${invoiceDate}</p>
-          <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.invoiceNumber}: ${invoiceNumber}</p>
+        <div style="font-family: Arial, sans-serif; color: #000000; background-color: #ffffff; width: 210mm; padding: 20mm; box-sizing: border-box;">
+          <h1 style="font-size: 24px; margin: 0; color: #333333; background-color: #ffffff;">${t.invoice}</h1>
+          <p style="margin: 5px 0; font-size: 12px; color: #666666; background-color: #ffffff;">${t.date}: ${invoiceDate}</p>
+          <p style="margin: 5px 0; font-size: 12px; color: #666666; background-color: #ffffff;">${t.invoiceNumber}: ${invoiceNumber}</p>
           
-          <h3 style="font-size: 14px; margin: 20px 0 10px 0; color: #333;">${t.billTo}</h3>
-          <p style="margin: 5px 0; font-size: 12px; color: #333; font-weight: bold;">${selectedClientForInvoice.name}</p>
-          ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
+          <h3 style="font-size: 14px; margin: 20px 0 10px 0; color: #333333; background-color: #ffffff;">${t.billTo}</h3>
+          <p style="margin: 5px 0; font-size: 12px; color: #333333; font-weight: bold; background-color: #ffffff;">${selectedClientForInvoice.name}</p>
+          ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666666; background-color: #ffffff;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
           
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff;">
             <tr style="background-color: #f0f0f0;">
-              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.description}</th>
-              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.amount}</th>
+              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #dddddd; background-color: #f0f0f0; color: #000000;">${t.description}</th>
+              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #dddddd; background-color: #f0f0f0; color: #000000;">${t.amount}</th>
             </tr>
             <tr>
-              <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${invoiceData.serviceDescription || t.windowCleaning}</td>
-              <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #ddd;">$${selectedJob.price}</td>
+              <td style="padding: 8px; font-size: 11px; border: 1px solid #dddddd; background-color: #ffffff; color: #000000;">${invoiceData.serviceDescription || t.windowCleaning}</td>
+              <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #dddddd; background-color: #ffffff; color: #000000;">$${selectedJob.price}</td>
             </tr>
           </table>
           
-          <p style="text-align: right; font-size: 14px; font-weight: bold; color: #333; margin: 20px 0;">${t.total}: $${selectedJob.price}</p>
+          <p style="text-align: right; font-size: 14px; font-weight: bold; color: #333333; background-color: #ffffff; margin: 20px 0;">${t.total}: $${selectedJob.price}</p>
           
-          <p style="margin: 20px 0; font-size: 10px; color: #666;">${t.thankYou}</p>
+          <p style="margin: 20px 0; font-size: 10px; color: #666666; background-color: #ffffff;">${t.thankYou}</p>
         </div>
       `
       
@@ -1355,7 +1361,24 @@ export default function WindowCleaningCRM() {
           logging: false,
           useCORS: false,
           allowTaint: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          ignoreElements: (element) => {
+            // Ignore any elements that might have problematic styles
+            return false
+          },
+          onclone: (clonedDoc) => {
+            // Ensure the cloned document doesn't inherit any problematic styles
+            const clonedElement = clonedDoc.body.lastElementChild
+            if (clonedElement) {
+              clonedElement.setAttribute('style', `
+                font-family: Arial, sans-serif !important;
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                all: initial !important;
+                display: block !important;
+              `)
+            }
+          }
         })
         console.log('html2canvas completed successfully')
       } catch (html2canvasError) {
