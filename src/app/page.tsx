@@ -2042,7 +2042,7 @@ export default function WindowCleaningCRM() {
                               id="default-service"
                               value={companySettings.defaultServiceDescription}
                               onChange={(e) => setCompanySettings({...companySettings, defaultServiceDescription: e.target.value})}
-                              placeholder="Window Cleaning Service"
+                              placeholder="Profilaktinis langų valymas"
                             />
                             <p className="text-sm text-gray-500 mt-1">This will be pre-filled when generating invoices</p>
                           </div>
