@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle, LogOut } from "lucide-react"
+import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle, LogOut, ChevronDown } from "lucide-react"
 import { Client } from "@prisma/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
@@ -125,7 +125,6 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
   }
   
   const monthDates = getMonthDates(selectedDate)
-  const monthName = selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedDate)
@@ -192,7 +191,44 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
           <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
             Previous
           </Button>
-          <span className="font-medium text-lg min-w-[200px] text-center">{monthName}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-lg">{selectedDate.toLocaleDateString('en-US', { month: 'long' })}</span>
+            <Select
+              value={selectedDate.getFullYear().toString()}
+              onValueChange={(value) => {
+                const newDate = new Date(selectedDate)
+                newDate.setFullYear(parseInt(value))
+                setSelectedDate(newDate)
+              }}
+            >
+              <SelectTrigger className="w-[100px] h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 21 }, (_, i) => {
+                  const year = new Date().getFullYear() - 10 + i
+                  return (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 text-xs"
+              onClick={() => {
+                const newDate = new Date(selectedDate)
+                newDate.setFullYear(new Date().getFullYear())
+                setSelectedDate(newDate)
+              }}
+              title="Go to current year"
+            >
+              Current
+            </Button>
+          </div>
           <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
             Next
           </Button>
