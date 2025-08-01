@@ -737,7 +737,8 @@ export default function WindowCleaningCRM() {
     jobId: "",
     notes: "",
     logoUrl: "",
-    serviceDescription: ""
+    serviceDescription: "",
+    paymentDate: ""
   })
   const [invoiceLanguage, setInvoiceLanguage] = useState("en")
   const [companySettings, setCompanySettings] = useState({
@@ -1212,11 +1213,16 @@ export default function WindowCleaningCRM() {
 
   const openInvoiceDialog = (client: ClientWithLastJob) => {
     setSelectedClientForInvoice(client)
+    // Calculate default payment date (30 days from now)
+    const defaultPaymentDate = new Date()
+    defaultPaymentDate.setDate(defaultPaymentDate.getDate() + 30)
+    
     setInvoiceData({
       jobId: "",
       notes: "",
       logoUrl: "",
-      serviceDescription: companySettings.defaultServiceDescription || "Window Cleaning Service"
+      serviceDescription: companySettings.defaultServiceDescription || "Window Cleaning Service",
+      paymentDate: defaultPaymentDate.toISOString().split('T')[0]
     })
     setInvoiceLanguage(companySettings.defaultLanguage || "en")
     setIsInvoiceDialogOpen(true)
@@ -1242,11 +1248,11 @@ export default function WindowCleaningCRM() {
         windowCleaning: "Window Cleaning Service",
         notes: "Notes:",
         thankYou: "Thank you for your business!",
-        paymentDue: "Payment due within 30 days.",
         bankInfo: "Bank Information",
         bankName: "Bank:",
         account: "Account:",
-        bankCode: "Bank Code/SWIFT:"
+        bankCode: "Bank Code/SWIFT:",
+        paymentDate: "Payment Due Date:"
       },
       lt: {
         invoice: "SĄSKAITA",
@@ -1260,11 +1266,11 @@ export default function WindowCleaningCRM() {
         windowCleaning: "Langų valymo paslauga",
         notes: "Pastabos:",
         thankYou: "Dėkojame, kad pasirinkote mus!",
-        paymentDue: "Mokėjimas per 30 dienų.",
         bankInfo: "Banko informacija",
         bankName: "Bankas:",
         account: "Sąskaita:",
-        bankCode: "Banko kodas/SWIFT:"
+        bankCode: "Banko kodas/SWIFT:",
+        paymentDate: "Mokėjimo terminas:"
       }
     }
 
@@ -1277,13 +1283,17 @@ export default function WindowCleaningCRM() {
       const pageHeight = pdf.internal.pageSize.getHeight()
       
       // Set up fonts and colors
-      pdf.setFont('helvetica')
+      // Use times font which has better Unicode support
+      pdf.setFont('times')
       
       // Add company logo if available
       if (companySettings.logoUrl) {
         try {
           const imgData = companySettings.logoUrl
-          pdf.addImage(imgData, 'JPEG', 15, 15, 50, 30)
+          // Calculate aspect ratio to maintain proportions
+          const imgWidth = 60
+          const imgHeight = 25
+          pdf.addImage(imgData, 'JPEG', 15, 15, imgWidth, imgHeight)
         } catch (error) {
           console.error('Error adding logo to PDF:', error)
         }
@@ -1292,16 +1302,16 @@ export default function WindowCleaningCRM() {
       // Company information header
       let yPos = 15
       if (companySettings.logoUrl) {
-        yPos = 55
+        yPos = 50
       }
       
       pdf.setFontSize(20)
-      pdf.setFont('helvetica', 'bold')
+      pdf.setFont('times', 'bold')
       pdf.text(companySettings.name || 'Your Company', pageWidth - 15, yPos, { align: 'right' })
       
       yPos += 10
       pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('times', 'normal')
       
       if (companySettings.address) {
         const addressLines = companySettings.address.split('\n')
@@ -1329,12 +1339,12 @@ export default function WindowCleaningCRM() {
       // Invoice title and details
       yPos += 20
       pdf.setFontSize(24)
-      pdf.setFont('helvetica', 'bold')
+      pdf.setFont('times', 'bold')
       pdf.text(t.invoice, 15, yPos)
       
       yPos += 15
       pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('times', 'normal')
       
       const invoiceDate = new Date().toLocaleDateString()
       const invoiceNumber = `INV-${Date.now()}`
@@ -1346,12 +1356,12 @@ export default function WindowCleaningCRM() {
       // Bill to section
       yPos += 20
       pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
+      pdf.setFont('times', 'bold')
       pdf.text(t.billTo, 15, yPos)
       
       yPos += 10
       pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('times', 'normal')
       pdf.text(selectedClientForInvoice.name, 15, yPos)
       yPos += 8
       
@@ -1380,7 +1390,7 @@ export default function WindowCleaningCRM() {
       pdf.setFillColor(240, 240, 240)
       pdf.rect(15, yPos, pageWidth - 30, 10, 'F')
       
-      pdf.setFont('helvetica', 'bold')
+      pdf.setFont('times', 'bold')
       pdf.text(t.description, 20, yPos + 7)
       pdf.text(t.serviceDate, 100, yPos + 7)
       pdf.text(t.amount, pageWidth - 35, yPos + 7, { align: 'right' })
@@ -1388,7 +1398,7 @@ export default function WindowCleaningCRM() {
       yPos += 15
       
       // Table content
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('times', 'normal')
       pdf.text(invoiceData.serviceDescription || t.windowCleaning, 20, yPos)
       pdf.text(new Date(selectedJob.date).toLocaleDateString(), 100, yPos)
       pdf.text(`$${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
@@ -1408,19 +1418,19 @@ export default function WindowCleaningCRM() {
       yPos += 8
       
       pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
+      pdf.setFont('times', 'bold')
       pdf.text(`${t.total} $${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
       
       // Bank information (if available)
       if (companySettings.bankName || companySettings.bankAccount) {
         yPos += 20
         pdf.setFontSize(12)
-        pdf.setFont('helvetica', 'bold')
+        pdf.setFont('times', 'bold')
         pdf.text(t.bankInfo, 15, yPos)
         
         yPos += 10
         pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
+        pdf.setFont('times', 'normal')
         
         if (companySettings.bankName) {
           pdf.text(`${t.bankName} ${companySettings.bankName}`, 15, yPos)
@@ -1441,10 +1451,12 @@ export default function WindowCleaningCRM() {
       // Footer notes
       yPos += 15
       pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('times', 'normal')
       pdf.text(t.thankYou, 15, yPos)
       yPos += 5
-      pdf.text(t.paymentDue, 15, yPos)
+      if (invoiceData.paymentDate) {
+        pdf.text(`${t.paymentDate} ${new Date(invoiceData.paymentDate).toLocaleDateString()}`, 15, yPos)
+      }
       
       // Save the PDF
       const fileName = `invoice-${selectedClientForInvoice.name.replace(/\s+/g, '-')}-${Date.now()}.pdf`
@@ -2330,12 +2342,21 @@ export default function WindowCleaningCRM() {
                             />
                           </div>
                           <div>
+                            <Label htmlFor="invoice-payment-date">Payment Due Date</Label>
+                            <Input
+                              id="invoice-payment-date"
+                              type="date"
+                              value={invoiceData.paymentDate}
+                              onChange={(e) => setInvoiceData({...invoiceData, paymentDate: e.target.value})}
+                            />
+                          </div>
+                          <div>
                             <Label htmlFor="invoice-notes">Invoice Notes</Label>
                             <Textarea
                               id="invoice-notes"
                               value={invoiceData.notes}
                               onChange={(e) => setInvoiceData({...invoiceData, notes: e.target.value})}
-                              placeholder="Thank you for your business! Payment due within 30 days."
+                              placeholder="Thank you for your business!"
                             />
                           </div>
                           <div className="flex gap-2">
