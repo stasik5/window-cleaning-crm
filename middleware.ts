@@ -11,19 +11,13 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Define protected routes
-  const protectedRoutes = ['/']
-  const authRoutes = ['/login', '/signup']
-
   const { pathname } = req.nextUrl
 
-  // Check if the current path is a protected route
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  )
+  // Define protected routes (main app and all sub-routes)
+  const isProtectedRoute = pathname === '/' || pathname.startsWith('/api/')
 
-  // Check if the current path is an auth route
-  const isAuthRoute = authRoutes.some(route => pathname === route)
+  // Define auth routes
+  const isAuthRoute = pathname === '/login' || pathname === '/signup'
 
   // Redirect authenticated users away from auth pages
   if (session && isAuthRoute) {

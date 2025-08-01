@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -640,6 +641,7 @@ export default function WindowCleaningCRM() {
     message: string
     details?: any
   }>({ isConnected: false, message: 'Checking database connection...' })
+  const [authLoading, setAuthLoading] = useState(true)
   const [clients, setClients] = useState<ClientWithLastJob[]>([])
   const [filteredClients, setFilteredClients] = useState<ClientWithLastJob[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -680,7 +682,8 @@ export default function WindowCleaningCRM() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading: authStateLoading } = useAuth()
+  const router = useRouter()
 
   // Fetch clients from API
   const checkDatabaseStatus = async () => {
@@ -761,7 +764,12 @@ export default function WindowCleaningCRM() {
   // Load data on mount and when filters change
   useEffect(() => {
     checkDatabaseStatus()
-  }, [])
+    
+    // Set auth loading to false when auth state is determined
+    if (!authStateLoading) {
+      setAuthLoading(false)
+    }
+  }, [authStateLoading])
 
   useEffect(() => {
     fetchClients()
@@ -1206,6 +1214,34 @@ TOTAL: $${selectedJob.price}
         variant: "destructive",
       })
     }
+  }
+
+  // Show loading spinner while checking auth state
+  if (authStateLoading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">Please sign in to access the CRM</p>
+          <Button onClick={() => router.push('/login')}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (

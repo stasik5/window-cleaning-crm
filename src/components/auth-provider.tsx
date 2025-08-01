@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const setData = async () => {
@@ -37,16 +39,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
+
+        // Handle sign out event
+        if (event === 'SIGNED_OUT') {
+          // Clear local state
+          setUser(null)
+          setSession(null)
+          // Redirect to login page
+          router.push('/login')
+          router.refresh()
+        }
       }
     )
 
     setData()
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+      // The redirect will be handled by the onAuthStateChange listener above
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   const signIn = async (email: string, password: string) => {
