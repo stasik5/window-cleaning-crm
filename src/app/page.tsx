@@ -220,13 +220,11 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
               size="sm" 
               className="h-8 px-2 text-xs"
               onClick={() => {
-                const newDate = new Date(selectedDate)
-                newDate.setFullYear(new Date().getFullYear())
-                setSelectedDate(newDate)
+                setSelectedDate(new Date())
               }}
-              title="Go to current year"
+              title="Go to today"
             >
-              Current
+              Today
             </Button>
           </div>
           <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
