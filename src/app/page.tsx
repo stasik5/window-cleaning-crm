@@ -1285,100 +1285,152 @@ export default function WindowCleaningCRM() {
 
     const t = translations[invoiceLanguage as keyof typeof translations] || translations.en
 
+    // Format dates in European format dd/mm/yyyy
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0')
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}/${month}/${year}`
+    }
+
     try {
-      // Create a temporary HTML element for better font rendering
-      const invoiceElement = document.createElement('div')
-      invoiceElement.style.fontFamily = 'Arial, sans-serif'
-      invoiceElement.style.width = '210mm'
-      invoiceElement.style.padding = '0'
-      invoiceElement.style.margin = '0'
-      invoiceElement.style.boxSizing = 'border-box'
-      invoiceElement.style.backgroundColor = '#ffffff'
-      invoiceElement.style.color = '#000000'
-      invoiceElement.style.position = 'absolute'
-      invoiceElement.style.left = '-9999px'
-      invoiceElement.style.top = '-9999px'
-      invoiceElement.style.all = 'initial' // Reset all inherited styles
-      invoiceElement.style.display = 'block' // Reset display
-      invoiceElement.style.fontFamily = 'Arial, sans-serif' // Reset font family
-      invoiceElement.style.color = '#000000' // Reset color
+      // Create a temporary iframe for complete style isolation
+      console.log('Creating isolated iframe for invoice generation...')
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'absolute'
+      iframe.style.left = '-9999px'
+      iframe.style.top = '-9999px'
+      iframe.style.width = '210mm'
+      iframe.style.height = '297mm'
+      document.body.appendChild(iframe)
       
-      // Format dates in European format dd/mm/yyyy
-      const formatDate = (date: Date) => {
-        const day = date.getDate().toString().padStart(2, '0')
-        const month = (date.getMonth() + 1).toString().padStart(2, '0')
-        const year = date.getFullYear()
-        return `${day}/${month}/${year}`
+      // Get the iframe document
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!iframeDoc) {
+        throw new Error('Could not access iframe document')
       }
+      
+      // Write a completely isolated HTML document
+      console.log('Writing isolated HTML content...')
       
       const invoiceDate = formatDate(new Date())
       const invoiceNumber = `INV-${Date.now()}`
-      const serviceDate = formatDate(new Date(selectedJob.date))
-      const paymentDate = invoiceData.paymentDate ? formatDate(new Date(invoiceData.paymentDate)) : ''
       
-      // Build HTML content with proper Unicode support
-      console.log('Building HTML content...')
-      const simpleHtml = `
-        <div style="font-family: Arial, sans-serif; color: #000000; background-color: #ffffff; width: 210mm; padding: 20mm; box-sizing: border-box;">
-          <h1 style="font-size: 24px; margin: 0; color: #333333; background-color: #ffffff;">${t.invoice}</h1>
-          <p style="margin: 5px 0; font-size: 12px; color: #666666; background-color: #ffffff;">${t.date}: ${invoiceDate}</p>
-          <p style="margin: 5px 0; font-size: 12px; color: #666666; background-color: #ffffff;">${t.invoiceNumber}: ${invoiceNumber}</p>
+      iframeDoc.open()
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: Arial, sans-serif;
+              color: #000000;
+              background-color: #ffffff;
+              width: 210mm;
+              padding: 20mm;
+            }
+            h1 {
+              font-size: 24px;
+              color: #333333;
+              background-color: #ffffff;
+              margin: 0;
+            }
+            p {
+              font-size: 12px;
+              color: #666666;
+              background-color: #ffffff;
+              margin: 5px 0;
+            }
+            h3 {
+              font-size: 14px;
+              color: #333333;
+              background-color: #ffffff;
+              margin: 20px 0 10px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+              background-color: #ffffff;
+            }
+            th {
+              padding: 8px;
+              text-align: left;
+              font-size: 12px;
+              border: 1px solid #dddddd;
+              background-color: #f0f0f0;
+              color: #000000;
+            }
+            td {
+              padding: 8px;
+              font-size: 11px;
+              border: 1px solid #dddddd;
+              background-color: #ffffff;
+              color: #000000;
+            }
+            .total {
+              text-align: right;
+              font-size: 14px;
+              font-weight: bold;
+              color: #333333;
+              background-color: #ffffff;
+              margin: 20px 0;
+            }
+            .thank-you {
+              font-size: 10px;
+              color: #666666;
+              background-color: #ffffff;
+              margin: 20px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${t.invoice}</h1>
+          <p>${t.date}: ${invoiceDate}</p>
+          <p>${t.invoiceNumber}: ${invoiceNumber}</p>
           
-          <h3 style="font-size: 14px; margin: 20px 0 10px 0; color: #333333; background-color: #ffffff;">${t.billTo}</h3>
-          <p style="margin: 5px 0; font-size: 12px; color: #333333; font-weight: bold; background-color: #ffffff;">${selectedClientForInvoice.name}</p>
-          ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666666; background-color: #ffffff;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
+          <h3>${t.billTo}</h3>
+          <p style="font-weight: bold;">${selectedClientForInvoice.name}</p>
+          ${selectedClientForInvoice.address ? `<p>${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
           
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #ffffff;">
-            <tr style="background-color: #f0f0f0;">
-              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #dddddd; background-color: #f0f0f0; color: #000000;">${t.description}</th>
-              <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #dddddd; background-color: #f0f0f0; color: #000000;">${t.amount}</th>
+          <table>
+            <tr>
+              <th>${t.description}</th>
+              <th>${t.amount}</th>
             </tr>
             <tr>
-              <td style="padding: 8px; font-size: 11px; border: 1px solid #dddddd; background-color: #ffffff; color: #000000;">${invoiceData.serviceDescription || t.windowCleaning}</td>
-              <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #dddddd; background-color: #ffffff; color: #000000;">$${selectedJob.price}</td>
+              <td>${invoiceData.serviceDescription || t.windowCleaning}</td>
+              <td style="text-align: right;">$${selectedJob.price}</td>
             </tr>
           </table>
           
-          <p style="text-align: right; font-size: 14px; font-weight: bold; color: #333333; background-color: #ffffff; margin: 20px 0;">${t.total}: $${selectedJob.price}</p>
+          <p class="total">${t.total}: $${selectedJob.price}</p>
           
-          <p style="margin: 20px 0; font-size: 10px; color: #666666; background-color: #ffffff;">${t.thankYou}</p>
-        </div>
-      `
+          <p class="thank-you">${t.thankYou}</p>
+        </body>
+        </html>
+      `)
+      iframeDoc.close()
       
-      invoiceElement.innerHTML = simpleHtml
+      console.log('HTML content written to iframe')
       
-      // Add to document body
-      document.body.appendChild(invoiceElement)
-      
-      console.log('HTML element created and added to body')
-      
-      // Convert to canvas
+      // Convert to canvas using the iframe body
       console.log('Starting html2canvas conversion...')
       let canvas
       try {
-        canvas = await html2canvas(invoiceElement, {
+        canvas = await html2canvas(iframeDoc.body, {
           scale: 1,
           logging: false,
           useCORS: false,
           allowTaint: false,
           backgroundColor: '#ffffff',
-          ignoreElements: (element) => {
-            // Ignore any elements that might have problematic styles
-            return false
-          },
-          onclone: (clonedDoc) => {
-            // Ensure the cloned document doesn't inherit any problematic styles
-            const clonedElement = clonedDoc.body.lastElementChild
-            if (clonedElement) {
-              clonedElement.setAttribute('style', `
-                font-family: Arial, sans-serif !important;
-                color: #000000 !important;
-                background-color: #ffffff !important;
-                all: initial !important;
-                display: block !important;
-              `)
-            }
-          }
+          width: iframeDoc.body.scrollWidth,
+          height: iframeDoc.body.scrollHeight
         })
         console.log('html2canvas completed successfully')
       } catch (html2canvasError) {
@@ -1386,8 +1438,8 @@ export default function WindowCleaningCRM() {
         throw new Error(`html2canvas failed: ${html2canvasError instanceof Error ? html2canvasError.message : 'Unknown error'}`)
       }
       
-      // Remove temporary element
-      document.body.removeChild(invoiceElement)
+      // Remove the iframe
+      document.body.removeChild(iframe)
       
       console.log('Creating PDF from canvas...')
       // Create PDF from canvas
