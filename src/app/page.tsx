@@ -482,7 +482,22 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
                       <Label className="text-sm font-medium text-gray-600">Phone</Label>
                       <p className="text-lg font-semibold flex items-center gap-2">
                         <Phone className="h-4 w-4" />
-                        {selectedClientForDetail.phone || 'Not provided'}
+                        {selectedClientForDetail.phone ? (
+                          <a 
+                            href={`tel:${selectedClientForDetail.phone.replace(/[^\d+]/g, '')}`}
+                            className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 active:text-blue-900"
+                            onClick={(e) => {
+                              // Add haptic feedback on mobile if available
+                              if ('vibrate' in navigator) {
+                                navigator.vibrate(50);
+                              }
+                            }}
+                          >
+                            {selectedClientForDetail.phone}
+                          </a>
+                        ) : (
+                          <span className="text-gray-500">Not provided</span>
+                        )}
                       </p>
                     </div>
                     <div>
@@ -1696,7 +1711,22 @@ TOTAL: $${selectedJob.price}
                                   <Label className="text-sm font-medium text-gray-600">Phone</Label>
                                   <p className="text-lg font-semibold flex items-center gap-2">
                                     <Phone className="h-4 w-4" />
-                                    {selectedClientForHistory.phone || 'Not provided'}
+                                    {selectedClientForHistory.phone ? (
+                                      <a 
+                                        href={`tel:${selectedClientForHistory.phone.replace(/[^\d+]/g, '')}`}
+                                        className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 active:text-blue-900"
+                                        onClick={(e) => {
+                                          // Add haptic feedback on mobile if available
+                                          if ('vibrate' in navigator) {
+                                            navigator.vibrate(50);
+                                          }
+                                        }}
+                                      >
+                                        {selectedClientForHistory.phone}
+                                      </a>
+                                    ) : (
+                                      <span className="text-gray-500">Not provided</span>
+                                    )}
                                   </p>
                                 </div>
                                 <div>
@@ -2079,7 +2109,18 @@ TOTAL: $${selectedJob.price}
                           <Phone className="h-5 w-5 text-gray-500" />
                           <div>
                             <div className="font-medium">Phone</div>
-                            <div className="text-gray-600">{selectedClientForDetail.phone}</div>
+                            <a 
+                              href={`tel:${selectedClientForDetail.phone.replace(/[^\d+]/g, '')}`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 active:text-blue-900"
+                              onClick={(e) => {
+                                // Add haptic feedback on mobile if available
+                                if ('vibrate' in navigator) {
+                                  navigator.vibrate(50);
+                                }
+                              }}
+                            >
+                              {selectedClientForDetail.phone}
+                            </a>
                           </div>
                         </div>
                       )}
