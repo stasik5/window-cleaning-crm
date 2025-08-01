@@ -1271,15 +1271,15 @@ export default function WindowCleaningCRM() {
         description: "Aprašymas",
         serviceDate: "Data",
         amount: "Suma",
-        total: "VISUMA:",
+        total: "VISO",
         windowCleaning: "Langų valymo paslauga",
-        notes: "Pastabos:",
+        notes: "Pastabos",
         thankYou: "Dėkojame, kad pasirinkote mus!",
         bankInfo: "Banko informacija",
-        bankName: "Bankas:",
-        account: "Sąskaita:",
-        bankCode: "Banko kodas/SWIFT:",
-        paymentDate: "Mokėjimo terminas:"
+        bankName: "Bankas",
+        account: "Sąskaita",
+        bankCode: "Banko kodas/SWIFT",
+        paymentDate: "Mokėjimo terminas"
       }
     }
 
@@ -1335,39 +1335,48 @@ export default function WindowCleaningCRM() {
               background-color: #ffffff;
               width: 210mm;
               padding: 20mm;
+              line-height: 1.4;
             }
             .header {
               display: flex;
               justify-content: space-between;
               align-items: flex-start;
               margin-bottom: 30px;
+              line-height: 1.4;
             }
             .company-info {
               text-align: right;
               max-width: 50%;
+              line-height: 1.4;
             }
             .company-logo {
               max-width: 120px;
               max-height: 50px;
               margin-bottom: 10px;
+              display: block;
+              margin-left: auto;
             }
             h1 {
               font-size: 24px;
               color: #333333;
               background-color: #ffffff;
-              margin: 0;
+              margin: 0 0 10px 0;
+              line-height: 1.2;
             }
             h2 {
               font-size: 20px;
               color: #333333;
               background-color: #ffffff;
               margin: 0 0 10px 0;
+              line-height: 1.2;
             }
             p {
               font-size: 12px;
               color: #666666;
               background-color: #ffffff;
               margin: 2px 0;
+              line-height: 1.4;
+              min-height: 14px;
             }
             h3 {
               font-size: 14px;
@@ -1376,27 +1385,33 @@ export default function WindowCleaningCRM() {
               margin: 20px 0 10px 0;
               padding-bottom: 5px;
               border-bottom: 1px solid #cccccc;
+              line-height: 1.3;
             }
             table {
               width: 100%;
               border-collapse: collapse;
               margin: 20px 0;
               background-color: #ffffff;
+              line-height: 1.4;
             }
             th {
-              padding: 8px;
+              padding: 10px 8px;
               text-align: left;
               font-size: 12px;
               border: 1px solid #dddddd;
               background-color: #f0f0f0;
               color: #000000;
+              line-height: 1.3;
+              font-weight: bold;
             }
             td {
-              padding: 8px;
+              padding: 10px 8px;
               font-size: 11px;
               border: 1px solid #dddddd;
               background-color: #ffffff;
               color: #000000;
+              line-height: 1.4;
+              vertical-align: top;
             }
             .total {
               text-align: right;
@@ -1405,35 +1420,49 @@ export default function WindowCleaningCRM() {
               color: #333333;
               background-color: #ffffff;
               margin: 20px 0;
+              line-height: 1.4;
             }
             .thank-you {
               font-size: 10px;
               color: #666666;
               background-color: #ffffff;
               margin: 20px 0;
+              line-height: 1.4;
             }
             .bank-info {
               margin: 20px 0;
-              padding: 10px;
+              padding: 15px 10px;
               background-color: #f9f9f9;
               border: 1px solid #eeeeee;
+              line-height: 1.4;
             }
             .bank-info h4 {
               font-size: 12px;
               color: #333333;
               background-color: #f9f9f9;
               margin: 0 0 8px 0;
+              line-height: 1.3;
+            }
+            .bank-info p {
+              margin: 4px 0;
+              line-height: 1.4;
             }
             .notes {
-              margin: 10px 0;
+              margin: 15px 0;
               font-size: 10px;
               color: #666666;
               background-color: #ffffff;
+              line-height: 1.4;
             }
             .footer {
               margin-top: 30px;
               padding-top: 20px;
               border-top: 1px solid #cccccc;
+              line-height: 1.4;
+            }
+            .footer p {
+              margin: 8px 0;
+              line-height: 1.4;
             }
           </style>
         </head>
@@ -1445,7 +1474,7 @@ export default function WindowCleaningCRM() {
               <p>${t.invoiceNumber}: ${invoiceNumber}</p>
             </div>
             <div class="company-info">
-              ${companySettings.logo ? `<img src="${companySettings.logo}" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">` : ''}
+              ${companySettings.logoUrl ? `<img src="${companySettings.logoUrl}" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">` : ''}
               <h2>${companySettings.name || 'Your Company'}</h2>
               ${companySettings.address ? `<p>${companySettings.address.replace(/\n/g, '<br>')}</p>` : ''}
               ${companySettings.phone ? `<p>Phone: ${companySettings.phone}</p>` : ''}
