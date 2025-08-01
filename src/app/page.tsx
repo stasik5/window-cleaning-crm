@@ -185,58 +185,73 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
   return (
     <div className="space-y-6">
       {/* Calendar Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Job Calendar</h2>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
-            Previous
-          </Button>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-lg">{selectedDate.toLocaleDateString('en-US', { month: 'long' })}</span>
-            <Select
-              value={selectedDate.getFullYear().toString()}
-              onValueChange={(value) => {
-                const newDate = new Date(selectedDate)
-                newDate.setFullYear(parseInt(value))
-                setSelectedDate(newDate)
-              }}
-            >
-              <SelectTrigger className="w-[100px] h-8 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 21 }, (_, i) => {
-                  const year = new Date().getFullYear() - 10 + i
-                  return (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Job Calendar</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')} className="flex-1 sm:flex-none">
+                Previous
+              </Button>
+              <div className="flex items-center gap-1 sm:gap-2 flex-1 sm:flex-none justify-center">
+                <span className="font-medium text-sm sm:text-lg">{selectedDate.toLocaleDateString('en-US', { month: 'long' })}</span>
+                <Select
+                  value={selectedDate.getFullYear().toString()}
+                  onValueChange={(value) => {
+                    const newDate = new Date(selectedDate)
+                    newDate.setFullYear(parseInt(value))
+                    setSelectedDate(newDate)
+                  }}
+                >
+                  <SelectTrigger className="w-[80px] sm:w-[100px] h-8 text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 21 }, (_, i) => {
+                      const year = new Date().getFullYear() - 10 + i
+                      return (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 px-1 sm:px-2 text-xs hidden sm:flex"
+                  onClick={() => {
+                    setSelectedDate(new Date())
+                  }}
+                  title="Go to today"
+                >
+                  Today
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => navigateMonth('next')} className="flex-1 sm:flex-none">
+                Next
+              </Button>
+            </div>
+            {/* Mobile Today Button */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm" 
-              className="h-8 px-2 text-xs"
+              className="w-full sm:hidden"
               onClick={() => {
                 setSelectedDate(new Date())
               }}
-              title="Go to today"
             >
               Today
             </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
-            Next
-          </Button>
         </div>
       </div>
       
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="p-3 text-center font-medium text-gray-700 border-b">
+          <div key={day} className="p-1 sm:p-3 text-center font-medium text-gray-700 border-b text-xs sm:text-sm">
             {day}
           </div>
         ))}
@@ -250,9 +265,9 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
             <div
               key={index}
               className={`
-                min-h-[120px] p-2 border border-gray-200 relative group
+                min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border border-gray-200 relative group
                 ${date ? 'bg-white hover:bg-gray-50 cursor-pointer' : 'bg-gray-50'}
-                ${isToday ? 'ring-2 ring-blue-500' : ''}
+                ${isToday ? 'ring-1 sm:ring-2 ring-blue-500' : ''}
               `}
               onClick={() => date && setSelectedDate(date)}
             >
@@ -264,27 +279,27 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
                       e.stopPropagation()
                       openAddJobDialog(date)
                     }}
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
-                             bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow-md
-                             focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 
+                             bg-blue-500 hover:bg-blue-600 text-white rounded-full p-0.5 sm:p-1 shadow-md
+                             focus:opacity-100 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-400"
                     title="Add job for this date"
                   >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-2 w-2 sm:h-3 sm:w-3" />
                   </button>
                   
                   <div className={`
-                    text-sm font-medium mb-1 pr-6
+                    text-xs sm:text-sm font-medium mb-1 pr-4 sm:pr-6
                     ${isToday ? 'text-blue-600' : 'text-gray-900'}
                   `}>
                     {date.getDate()}
                   </div>
                   
-                  <div className="space-y-1 max-h-[80px] overflow-y-auto">
+                  <div className="space-y-0.5 sm:space-y-1 max-h-[50px] sm:max-h-[80px] overflow-y-auto">
                     {dayJobs.map((job, jobIndex) => (
                       <div
                         key={jobIndex}
                         className={`
-                          text-xs p-1 rounded border cursor-pointer
+                          text-xs p-0.5 sm:p-1 rounded border cursor-pointer
                           ${getStatusColor(job.status)}
                           hover:opacity-80 transition-opacity
                         `}
@@ -295,12 +310,12 @@ function CalendarView({ clients, onClientClick, onClientSelectForJob, onAddJob }
                         }}
                         title={`${job.clientName} - $${job.price}`}
                       >
-                        <div className="font-medium truncate">{job.clientName}</div>
+                        <div className="font-medium truncate text-xs">{job.clientName}</div>
                         <div className="flex justify-between items-center">
-                          <span>${job.price}</span>
+                          <span className="text-xs">${job.price}</span>
                           <div className="flex">
                             {Array.from({ length: Math.min(job.clientRating, 3) }, (_, i) => (
-                              <Star key={i} className="h-2 w-2 fill-yellow-400 text-yellow-400" />
+                              <Star key={i} className="h-1.5 w-1.5 sm:h-2 sm:w-2 fill-yellow-400 text-yellow-400" />
                             ))}
                           </div>
                         </div>
@@ -1282,33 +1297,34 @@ TOTAL: $${selectedJob.price}
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Window Cleaning CRM Plus</h1>
-              <p className="text-gray-600">Manage your window cleaning business with ease</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Window Cleaning CRM Plus</h1>
+              <p className="text-sm sm:text-base text-gray-600">Manage your window cleaning business with ease</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
               {/* Database Indicator */}
               <div className={`flex items-center gap-2 text-sm ${dbStatus.isConnected ? 'text-green-600' : 'text-red-600'}`}>
                 <Database className={`h-4 w-4 ${dbStatus.isConnected ? 'text-green-600' : 'text-red-600'}`} />
-                <span>{dbStatus.isConnected ? 'Database Connected' : 'Database Disconnected'}</span>
+                <span className="hidden sm:inline">{dbStatus.isConnected ? 'Database Connected' : 'Database Disconnected'}</span>
+                <span className="sm:hidden">{dbStatus.isConnected ? 'Connected' : 'Disconnected'}</span>
               </div>
               
               {/* User Info & Logout */}
               {user && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                  <span className="text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">
                     {user.email}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={signOut}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 w-full sm:w-auto justify-center"
                   >
                     <LogOut className="h-4 w-4" />
-                    Logout
+                    <span className="hidden sm:inline">Logout</span>
                   </Button>
                 </div>
               )}
@@ -1353,7 +1369,7 @@ TOTAL: $${selectedJob.price}
               
               <TabsContent value="dashboard" className="space-y-6">
                 {/* Controls */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="space-y-4 mb-6">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
@@ -1364,47 +1380,50 @@ TOTAL: $${selectedJob.price}
                     />
                   </div>
                   
-                  <Select value={ratingFilter} onValueChange={setRatingFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Filter by rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Ratings</SelectItem>
-                      <SelectItem value="5">5 Stars</SelectItem>
-                      <SelectItem value="4">4+ Stars</SelectItem>
-                      <SelectItem value="3">3+ Stars</SelectItem>
-                      <SelectItem value="2">2+ Stars</SelectItem>
-                      <SelectItem value="1">1+ Stars</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-2">
-                    <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                      <SelectTrigger className="w-full sm:w-40">
-                        <SelectValue placeholder="Sort by" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Select value={ratingFilter} onValueChange={setRatingFilter}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Filter by rating" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="name">Name</SelectItem>
-                        <SelectItem value="rating">Rating</SelectItem>
-                        <SelectItem value="price">Last Price</SelectItem>
-                        <SelectItem value="date">Last Date</SelectItem>
+                        <SelectItem value="all">All Ratings</SelectItem>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                        <SelectItem value="4">4+ Stars</SelectItem>
+                        <SelectItem value="3">3+ Stars</SelectItem>
+                        <SelectItem value="2">2+ Stars</SelectItem>
+                        <SelectItem value="1">1+ Stars</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                      className="shrink-0"
-                    >
-                      <ArrowUpDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Client
+                    
+                    <div className="flex gap-2 col-span-1 sm:col-span-2 lg:col-span-2">
+                      <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="name">Name</SelectItem>
+                          <SelectItem value="rating">Rating</SelectItem>
+                          <SelectItem value="price">Last Price</SelectItem>
+                          <SelectItem value="date">Last Date</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                        className="shrink-0"
+                      >
+                        <ArrowUpDown className="h-4 w-4" />
                       </Button>
-                    </DialogTrigger>
+                    </div>
+                    
+                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="w-full sm:col-span-2 lg:col-span-1">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Client
+                        </Button>
+                      </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Add New Client</DialogTitle>
