@@ -1234,101 +1234,174 @@ export default function WindowCleaningCRM() {
     const selectedJob = selectedClientForInvoice.jobs?.find(job => job.id === invoiceData.jobId)
     if (!selectedJob) return
 
+    // Language mappings
+    const translations = {
+      en: {
+        invoice: "INVOICE",
+        date: "Date",
+        invoiceNumber: "Invoice #",
+        billTo: "BILL TO:",
+        description: "Description",
+        serviceDate: "Date",
+        amount: "Amount",
+        total: "TOTAL:",
+        windowCleaning: "Window Cleaning Service",
+        notes: "Notes:",
+        thankYou: "Thank you for your business!",
+        bankInfo: "Bank Information",
+        bankName: "Bank:",
+        account: "Account:",
+        bankCode: "Bank Code/SWIFT:",
+        paymentDate: "Payment Due Date:"
+      },
+      lt: {
+        invoice: "SĄSKAITA",
+        date: "Data",
+        invoiceNumber: "Sąskaitos nr.",
+        billTo: "MOKĖTOJAS:",
+        description: "Aprašymas",
+        serviceDate: "Data",
+        amount: "Suma",
+        total: "VISUMA:",
+        windowCleaning: "Langų valymo paslauga",
+        notes: "Pastabos:",
+        thankYou: "Dėkojame, kad pasirinkote mus!",
+        bankInfo: "Banko informacija",
+        bankName: "Bankas:",
+        account: "Sąskaita:",
+        bankCode: "Banko kodas/SWIFT:",
+        paymentDate: "Mokėjimo terminas:"
+      }
+    }
+
+    const t = translations[invoiceLanguage as keyof typeof translations] || translations.en
+
     try {
       // Create a new PDF document
       const pdf = new jsPDF()
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       
-      // Set up fonts - using helvetica for now, will add custom font support
-      pdf.setFont('helvetica')
+      // Set up fonts and colors
+      // Use times font which has better Unicode support
+      pdf.setFont('times')
       
-      // Generate invoice number
-      const invoiceNumber = `ST1-${Date.now().toString().slice(-12)}`
-      const currentDate = new Date().toLocaleDateString('lt-LT')
-      const dueDate = invoiceData.paymentDate ? new Date(invoiceData.paymentDate).toLocaleDateString('lt-LT') : ''
-      
-      // Header
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('SĄSKAITA FAKTŪRA', 15, 20)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`ST1 Nr. ${invoiceNumber}`, 15, 30)
-      pdf.text(`Dokumento data: ${currentDate}`, 15, 40)
-      if (dueDate) {
-        pdf.text(`Apmokėti iki: ${dueDate}`, 15, 50)
+      // Add company logo if available
+      if (companySettings.logoUrl) {
+        try {
+          const imgData = companySettings.logoUrl
+          // Calculate aspect ratio to maintain proportions
+          const imgWidth = 60
+          const imgHeight = 25
+          pdf.addImage(imgData, 'JPEG', 15, 15, imgWidth, imgHeight)
+        } catch (error) {
+          console.error('Error adding logo to PDF:', error)
+        }
       }
       
-      // Seller Section
-      let yPos = 70
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('PARDAVĖJAS', 15, yPos)
+      // Company information header
+      let yPos = 15
+      if (companySettings.logoUrl) {
+        yPos = 50
+      }
+      
+      pdf.setFontSize(20)
+      pdf.setFont('times', 'bold')
+      pdf.text(companySettings.name || 'Your Company', pageWidth - 15, yPos, { align: 'right' })
+      
       yPos += 10
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(companySettings.name || 'Your Company', 15, yPos)
-      yPos += 7
+      pdf.setFontSize(10)
+      pdf.setFont('times', 'normal')
+      
       if (companySettings.address) {
         const addressLines = companySettings.address.split('\n')
+        addressLines.forEach(line => {
+          pdf.text(line, pageWidth - 15, yPos, { align: 'right' })
+          yPos += 5
+        })
+      }
+      
+      if (companySettings.phone) {
+        pdf.text(`Phone: ${companySettings.phone}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      if (companySettings.email) {
+        pdf.text(`Email: ${companySettings.email}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      if (companySettings.website) {
+        pdf.text(`Website: ${companySettings.website}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      // Invoice title and details
+      yPos += 20
+      pdf.setFontSize(24)
+      pdf.setFont('times', 'bold')
+      pdf.text(t.invoice, 15, yPos)
+      
+      yPos += 15
+      pdf.setFontSize(12)
+      pdf.setFont('times', 'normal')
+      
+      const invoiceDate = new Date().toLocaleDateString()
+      const invoiceNumber = `INV-${Date.now()}`
+      
+      pdf.text(`${t.date}: ${invoiceDate}`, 15, yPos)
+      yPos += 8
+      pdf.text(`${t.invoiceNumber}: ${invoiceNumber}`, 15, yPos)
+      
+      // Bill to section
+      yPos += 20
+      pdf.setFontSize(14)
+      pdf.setFont('times', 'bold')
+      pdf.text(t.billTo, 15, yPos)
+      
+      yPos += 10
+      pdf.setFontSize(12)
+      pdf.setFont('times', 'normal')
+      pdf.text(selectedClientForInvoice.name, 15, yPos)
+      yPos += 8
+      
+      if (selectedClientForInvoice.address) {
+        const addressLines = selectedClientForInvoice.address.split('\n')
         addressLines.forEach(line => {
           pdf.text(line, 15, yPos)
           yPos += 5
         })
       }
-      if (companySettings.phone) {
-        pdf.text(`Tel: ${companySettings.phone}`, 15, yPos)
-        yPos += 5
-      }
-      if (companySettings.email) {
-        pdf.text(`Email: ${companySettings.email}`, 15, yPos)
-        yPos += 5
-      }
       
-      // Purchaser Section
-      yPos = 70
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('PIRKĖJAS', 120, yPos)
-      yPos += 10
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(selectedClientForInvoice.name, 120, yPos)
-      yPos += 7
-      if (selectedClientForInvoice.address) {
-        const addressLines = selectedClientForInvoice.address.split('\n')
-        addressLines.forEach(line => {
-          pdf.text(line, 120, yPos)
-          yPos += 5
-        })
-      }
       if (selectedClientForInvoice.phone) {
-        pdf.text(`Tel: ${selectedClientForInvoice.phone}`, 120, yPos)
-        yPos += 5
+        pdf.text(selectedClientForInvoice.phone, 15, yPos)
+        yPos += 8
       }
+      
       if (selectedClientForInvoice.email) {
-        pdf.text(`Email: ${selectedClientForInvoice.email}`, 120, yPos)
-        yPos += 5
+        pdf.text(selectedClientForInvoice.email, 15, yPos)
+        yPos += 8
       }
       
-      // Table Header
-      yPos = Math.max(yPos, 130) + 20
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Nr.', 15, yPos)
-      pdf.text('Prekės ar paslaugos pavadinimas', 30, yPos)
-      pdf.text('Mato vnt.', 100, yPos)
-      pdf.text('Kiekis', 120, yPos)
-      pdf.text('Vieneto kaina', 140, yPos)
-      pdf.text('Suma', 170, yPos)
-      
-      yPos += 5
-      pdf.line(15, yPos, 195, yPos)
+      // Service details table
       yPos += 10
       
-      // Table Content
-      pdf.setFont('helvetica', 'normal')
-      pdf.text('1', 15, yPos)
+      // Table header
+      pdf.setFillColor(240, 240, 240)
+      pdf.rect(15, yPos, pageWidth - 30, 10, 'F')
+      
+      pdf.setFont('times', 'bold')
+      pdf.text(t.description, 20, yPos + 7)
+      pdf.text(t.serviceDate, 100, yPos + 7)
+      pdf.text(t.amount, pageWidth - 35, yPos + 7, { align: 'right' })
+      
+      yPos += 15
+      
+      // Table content
+      pdf.setFont('times', 'normal')
       
       // Handle Lithuanian characters by replacing them with ASCII equivalents
-      const serviceDescription = invoiceData.serviceDescription || companySettings.defaultServiceDescription || "Langų valymas"
+      const serviceDescription = invoiceData.serviceDescription || t.windowCleaning
       const cleanDescription = serviceDescription
         .replace(/ą/g, 'a')
         .replace(/č/g, 'c')
@@ -1347,58 +1420,67 @@ export default function WindowCleaningCRM() {
         .replace(/Ū/g, 'U')
         .replace(/Ž/g, 'Z')
       
-      // Split long descriptions into multiple lines
-      const maxWidth = 65
-      const lines = pdf.splitTextToSize(cleanDescription, maxWidth)
-      pdf.text(lines, 30, yPos)
+      pdf.text(cleanDescription, 20, yPos)
+      pdf.text(new Date(selectedJob.date).toLocaleDateString(), 100, yPos)
+      pdf.text(`$${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
       
-      const lineHeight = 7
-      const descriptionHeight = lines.length * lineHeight
+      yPos += 8
       
-      pdf.text('Vnt.', 100, yPos)
-      pdf.text('1', 120, yPos)
-      pdf.text(selectedJob.price.toString(), 140, yPos)
-      pdf.text(selectedJob.price.toString(), 170, yPos)
-      
-      yPos += Math.max(descriptionHeight, lineHeight) + 10
+      if (invoiceData.notes) {
+        pdf.setFontSize(10)
+        pdf.text(`${t.notes} ${invoiceData.notes}`, 20, yPos)
+        yPos += 8
+      }
       
       // Total line
-      pdf.line(15, yPos, 195, yPos)
       yPos += 10
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('Iš viso:', 140, yPos)
-      pdf.text(`${selectedJob.price} EUR`, 170, yPos)
+      pdf.setDrawColor(0, 0, 0)
+      pdf.line(15, yPos, pageWidth - 15, yPos)
+      yPos += 8
       
-      yPos += 15
-      pdf.setFont('helvetica', 'normal')
-      const amountInWords = `${selectedJob.price} EUR`
-      pdf.text(`Suma žodžiu: ${amountInWords}`, 15, yPos)
+      pdf.setFontSize(14)
+      pdf.setFont('times', 'bold')
+      pdf.text(`${t.total} $${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
       
-      yPos += 20
+      // Bank information (if available)
       if (companySettings.bankName || companySettings.bankAccount) {
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Banko informacija:', 15, yPos)
-        yPos += 7
-        pdf.setFont('helvetica', 'normal')
+        yPos += 20
+        pdf.setFontSize(12)
+        pdf.setFont('times', 'bold')
+        pdf.text(t.bankInfo, 15, yPos)
+        
+        yPos += 10
+        pdf.setFontSize(10)
+        pdf.setFont('times', 'normal')
+        
         if (companySettings.bankName) {
-          pdf.text(`Bankas: ${companySettings.bankName}`, 15, yPos)
-          yPos += 5
+          pdf.text(`${t.bankName} ${companySettings.bankName}`, 15, yPos)
+          yPos += 6
         }
+        
         if (companySettings.bankAccount) {
-          pdf.text(`Sąskaita: ${companySettings.bankAccount}`, 15, yPos)
-          yPos += 5
+          pdf.text(`${t.account} ${companySettings.bankAccount}`, 15, yPos)
+          yPos += 6
         }
+        
         if (companySettings.bankCode) {
-          pdf.text(`Banko kodas: ${companySettings.bankCode}`, 15, yPos)
-          yPos += 5
+          pdf.text(`${t.bankCode} ${companySettings.bankCode}`, 15, yPos)
+          yPos += 6
         }
       }
       
+      // Footer notes
       yPos += 15
-      pdf.text(`Sąskaitą išrašė: ${companySettings.name || 'Your Company'}`, 15, yPos)
+      pdf.setFontSize(10)
+      pdf.setFont('times', 'normal')
+      pdf.text(t.thankYou, 15, yPos)
+      yPos += 5
+      if (invoiceData.paymentDate) {
+        pdf.text(`${t.paymentDate} ${new Date(invoiceData.paymentDate).toLocaleDateString()}`, 15, yPos)
+      }
       
       // Save the PDF
-      const fileName = `saskaita-${selectedClientForInvoice.name.replace(/\s+/g, '-')}-${Date.now()}.pdf`
+      const fileName = `invoice-${selectedClientForInvoice.name.replace(/\s+/g, '-')}-${Date.now()}.pdf`
       pdf.save(fileName)
       
       // Close dialogs and reset state
@@ -1406,15 +1488,19 @@ export default function WindowCleaningCRM() {
       setSelectedClientForInvoice(null)
       
       toast({
-        title: "Sąskaita sugeneruota",
-        description: `PDF sąskaita "${fileName}" buvo sugeneruota ir atsisiųsta.`,
+        title: invoiceLanguage === 'lt' ? "Sąskaita sugeneruota" : "Invoice Generated",
+        description: invoiceLanguage === 'lt' 
+          ? `PDF sąskaita "${fileName}" buvo sugeneruota ir atsisiųsta.`
+          : `PDF invoice "${fileName}" has been generated and downloaded.`,
       })
       
     } catch (error) {
       console.error('Error generating PDF invoice:', error)
       toast({
-        title: "Klaida",
-        description: "Nepavyko sugeneruoti PDF sąskaitos. Bandykite dar kartą.",
+        title: invoiceLanguage === 'lt' ? "Klaida" : "Error",
+        description: invoiceLanguage === 'lt' 
+          ? "Nepavyko sugeneruoti PDF sąskaitos. Badykite dar kartą."
+          : "Failed to generate PDF invoice. Please try again.",
         variant: "destructive",
       })
     }
