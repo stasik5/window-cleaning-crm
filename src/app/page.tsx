@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle, LogOut, ChevronDown } from "lucide-react"
+import { Plus, Search, Star, MapPin, Phone, Mail, Edit, Trash2, Calendar, DollarSign, History, FileText, ArrowUpDown, X, Download, Upload, Database, AlertCircle, LogOut, ChevronDown, Settings } from "lucide-react"
 import { Client } from "@prisma/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/components/auth-provider"
@@ -719,6 +721,7 @@ export default function WindowCleaningCRM() {
   const [isJobHistoryOpen, setIsJobHistoryOpen] = useState(false)
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false)
   const [isClientDetailOpen, setIsClientDetailOpen] = useState(false)
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<ClientWithLastJob | null>(null)
   const [selectedClientForJob, setSelectedClientForJob] = useState<ClientWithLastJob | null>(null)
   const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientWithLastJob | null>(null)
@@ -733,7 +736,22 @@ export default function WindowCleaningCRM() {
   const [invoiceData, setInvoiceData] = useState({
     jobId: "",
     notes: "",
-    logoUrl: ""
+    logoUrl: "",
+    serviceDescription: ""
+  })
+  const [invoiceLanguage, setInvoiceLanguage] = useState("en")
+  const [companySettings, setCompanySettings] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
+    logoUrl: "",
+    bankName: "",
+    bankAccount: "",
+    bankCode: "",
+    defaultLanguage: "en",
+    defaultServiceDescription: "Window Cleaning Service"
   })
   const [newClient, setNewClient] = useState({
     name: "",
@@ -838,6 +856,18 @@ export default function WindowCleaningCRM() {
   useEffect(() => {
     fetchClients()
   }, [searchTerm, ratingFilter, sortBy, sortOrder, dbStatus.isConnected])
+
+  // Load company settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('companySettings')
+    if (savedSettings) {
+      try {
+        setCompanySettings(JSON.parse(savedSettings))
+      } catch (error) {
+        console.error('Error loading company settings:', error)
+      }
+    }
+  }, [])
 
   const getColorCoding = (lastJobDate: Date | undefined) => {
     if (!lastJobDate) return "bg-gray-100"
@@ -1185,50 +1215,262 @@ export default function WindowCleaningCRM() {
     setInvoiceData({
       jobId: "",
       notes: "",
-      logoUrl: ""
+      logoUrl: "",
+      serviceDescription: companySettings.defaultServiceDescription || "Window Cleaning Service"
     })
+    setInvoiceLanguage(companySettings.defaultLanguage || "en")
     setIsInvoiceDialogOpen(true)
   }
 
-  const generateInvoice = () => {
+  const generateInvoice = async () => {
     if (!selectedClientForInvoice) return
     
     const selectedJob = selectedClientForInvoice.jobs?.find(job => job.id === invoiceData.jobId)
     if (!selectedJob) return
-    
-    // Create invoice content (in a real app, this would generate a PDF)
-    const invoiceContent = `
-INVOICE
-=======
-Date: ${new Date().toLocaleDateString()}
-Invoice #: INV-${Date.now()}
-BILL TO:
-${selectedClientForInvoice.name}
-${selectedClientForInvoice.address || ''}
-${selectedClientForInvoice.phone || ''}
-${selectedClientForInvoice.email || ''}
-SERVICE DETAILS:
-Job Date: ${new Date(selectedJob.date).toLocaleDateString()}
-Service: Window Cleaning
-Amount: $${selectedJob.price}
-Status: ${selectedJob.status}
-Notes: ${invoiceData.notes || 'Thank you for your business!'}
-TOTAL: $${selectedJob.price}
-    `
-    
-    // Create and download the invoice as a text file (in real app, use jsPDF)
-    const blob = new Blob([invoiceContent], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${selectedClientForInvoice.name.replace(/\s+/g, '-')}-${Date.now()}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    setIsInvoiceDialogOpen(false)
-    setSelectedClientForInvoice(null)
+
+    // Language mappings
+    const translations = {
+      en: {
+        invoice: "INVOICE",
+        date: "Date",
+        invoiceNumber: "Invoice #",
+        billTo: "BILL TO:",
+        description: "Description",
+        serviceDate: "Date",
+        amount: "Amount",
+        total: "TOTAL:",
+        windowCleaning: "Window Cleaning Service",
+        notes: "Notes:",
+        thankYou: "Thank you for your business!",
+        paymentDue: "Payment due within 30 days.",
+        bankInfo: "Bank Information",
+        bankName: "Bank:",
+        account: "Account:",
+        bankCode: "Bank Code/SWIFT:"
+      },
+      lt: {
+        invoice: "SĄSKAITA",
+        date: "Data",
+        invoiceNumber: "Sąskaitos nr.",
+        billTo: "MOKĖTOJAS:",
+        description: "Aprašymas",
+        serviceDate: "Data",
+        amount: "Suma",
+        total: "VISUMA:",
+        windowCleaning: "Langų valymo paslauga",
+        notes: "Pastabos:",
+        thankYou: "Dėkojame, kad pasirinkote mus!",
+        paymentDue: "Mokėjimas per 30 dienų.",
+        bankInfo: "Banko informacija",
+        bankName: "Bankas:",
+        account: "Sąskaita:",
+        bankCode: "Banko kodas/SWIFT:"
+      }
+    }
+
+    const t = translations[invoiceLanguage as keyof typeof translations] || translations.en
+
+    try {
+      // Create a new PDF document
+      const pdf = new jsPDF()
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      
+      // Set up fonts and colors
+      pdf.setFont('helvetica')
+      
+      // Add company logo if available
+      if (companySettings.logoUrl) {
+        try {
+          const imgData = companySettings.logoUrl
+          pdf.addImage(imgData, 'JPEG', 15, 15, 50, 30)
+        } catch (error) {
+          console.error('Error adding logo to PDF:', error)
+        }
+      }
+      
+      // Company information header
+      let yPos = 15
+      if (companySettings.logoUrl) {
+        yPos = 55
+      }
+      
+      pdf.setFontSize(20)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(companySettings.name || 'Your Company', pageWidth - 15, yPos, { align: 'right' })
+      
+      yPos += 10
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      
+      if (companySettings.address) {
+        const addressLines = companySettings.address.split('\n')
+        addressLines.forEach(line => {
+          pdf.text(line, pageWidth - 15, yPos, { align: 'right' })
+          yPos += 5
+        })
+      }
+      
+      if (companySettings.phone) {
+        pdf.text(`Phone: ${companySettings.phone}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      if (companySettings.email) {
+        pdf.text(`Email: ${companySettings.email}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      if (companySettings.website) {
+        pdf.text(`Website: ${companySettings.website}`, pageWidth - 15, yPos, { align: 'right' })
+        yPos += 5
+      }
+      
+      // Invoice title and details
+      yPos += 20
+      pdf.setFontSize(24)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(t.invoice, 15, yPos)
+      
+      yPos += 15
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      
+      const invoiceDate = new Date().toLocaleDateString()
+      const invoiceNumber = `INV-${Date.now()}`
+      
+      pdf.text(`${t.date}: ${invoiceDate}`, 15, yPos)
+      yPos += 8
+      pdf.text(`${t.invoiceNumber}: ${invoiceNumber}`, 15, yPos)
+      
+      // Bill to section
+      yPos += 20
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(t.billTo, 15, yPos)
+      
+      yPos += 10
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(selectedClientForInvoice.name, 15, yPos)
+      yPos += 8
+      
+      if (selectedClientForInvoice.address) {
+        const addressLines = selectedClientForInvoice.address.split('\n')
+        addressLines.forEach(line => {
+          pdf.text(line, 15, yPos)
+          yPos += 5
+        })
+      }
+      
+      if (selectedClientForInvoice.phone) {
+        pdf.text(selectedClientForInvoice.phone, 15, yPos)
+        yPos += 8
+      }
+      
+      if (selectedClientForInvoice.email) {
+        pdf.text(selectedClientForInvoice.email, 15, yPos)
+        yPos += 8
+      }
+      
+      // Service details table
+      yPos += 10
+      
+      // Table header
+      pdf.setFillColor(240, 240, 240)
+      pdf.rect(15, yPos, pageWidth - 30, 10, 'F')
+      
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(t.description, 20, yPos + 7)
+      pdf.text(t.serviceDate, 100, yPos + 7)
+      pdf.text(t.amount, pageWidth - 35, yPos + 7, { align: 'right' })
+      
+      yPos += 15
+      
+      // Table content
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(invoiceData.serviceDescription || t.windowCleaning, 20, yPos)
+      pdf.text(new Date(selectedJob.date).toLocaleDateString(), 100, yPos)
+      pdf.text(`$${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
+      
+      yPos += 8
+      
+      if (invoiceData.notes) {
+        pdf.setFontSize(10)
+        pdf.text(`${t.notes} ${invoiceData.notes}`, 20, yPos)
+        yPos += 8
+      }
+      
+      // Total line
+      yPos += 10
+      pdf.setDrawColor(0, 0, 0)
+      pdf.line(15, yPos, pageWidth - 15, yPos)
+      yPos += 8
+      
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`${t.total} $${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
+      
+      // Bank information (if available)
+      if (companySettings.bankName || companySettings.bankAccount) {
+        yPos += 20
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(t.bankInfo, 15, yPos)
+        
+        yPos += 10
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'normal')
+        
+        if (companySettings.bankName) {
+          pdf.text(`${t.bankName} ${companySettings.bankName}`, 15, yPos)
+          yPos += 6
+        }
+        
+        if (companySettings.bankAccount) {
+          pdf.text(`${t.account} ${companySettings.bankAccount}`, 15, yPos)
+          yPos += 6
+        }
+        
+        if (companySettings.bankCode) {
+          pdf.text(`${t.bankCode} ${companySettings.bankCode}`, 15, yPos)
+          yPos += 6
+        }
+      }
+      
+      // Footer notes
+      yPos += 15
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(t.thankYou, 15, yPos)
+      yPos += 5
+      pdf.text(t.paymentDue, 15, yPos)
+      
+      // Save the PDF
+      const fileName = `invoice-${selectedClientForInvoice.name.replace(/\s+/g, '-')}-${Date.now()}.pdf`
+      pdf.save(fileName)
+      
+      // Close dialogs and reset state
+      setIsInvoiceDialogOpen(false)
+      setSelectedClientForInvoice(null)
+      
+      toast({
+        title: invoiceLanguage === 'lt' ? "Sąskaita sugeneruota" : "Invoice Generated",
+        description: invoiceLanguage === 'lt' 
+          ? `PDF sąskaita "${fileName}" buvo sugeneruota ir atsisiųsta.`
+          : `PDF invoice "${fileName}" has been generated and downloaded.`,
+      })
+      
+    } catch (error) {
+      console.error('Error generating PDF invoice:', error)
+      toast({
+        title: invoiceLanguage === 'lt' ? "Klaida" : "Error",
+        description: invoiceLanguage === 'lt' 
+          ? "Nepavyko sugeneruoti PDF sąskaitos. Bandykite dar kartą."
+          : "Failed to generate PDF invoice. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleCalendarAddJob = async (date: Date, clientId: string, jobData: { price: string; notes: string; status: string }) => {
@@ -1435,7 +1677,7 @@ TOTAL: $${selectedJob.price}
                     
                     <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button className="w-full sm:col-span-2 lg:col-span-1">
+                        <Button className="w-full sm:col-span-1 lg:col-span-1">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Client
                         </Button>
@@ -1494,6 +1736,189 @@ TOTAL: $${selectedJob.price}
                         <Button onClick={handleAddClient} className="w-full" disabled={submitting}>
                           {submitting ? "Adding..." : "Add Client"}
                         </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  {/* Settings Button */}
+                  <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="w-full sm:col-span-1 lg:col-span-1">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Company Settings</DialogTitle>
+                        <p className="text-sm text-gray-600">Configure your company information for invoices</p>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="company-name">Company Name *</Label>
+                          <Input
+                            id="company-name"
+                            value={companySettings.name}
+                            onChange={(e) => setCompanySettings({...companySettings, name: e.target.value})}
+                            placeholder="Your company name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="company-address">Address</Label>
+                          <Textarea
+                            id="company-address"
+                            value={companySettings.address}
+                            onChange={(e) => setCompanySettings({...companySettings, address: e.target.value})}
+                            placeholder="Company address"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="company-phone">Phone</Label>
+                            <Input
+                              id="company-phone"
+                              value={companySettings.phone}
+                              onChange={(e) => setCompanySettings({...companySettings, phone: e.target.value})}
+                              placeholder="Company phone"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="company-email">Email</Label>
+                            <Input
+                              id="company-email"
+                              type="email"
+                              value={companySettings.email}
+                              onChange={(e) => setCompanySettings({...companySettings, email: e.target.value})}
+                              placeholder="Company email"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="company-website">Website</Label>
+                          <Input
+                            id="company-website"
+                            value={companySettings.website}
+                            onChange={(e) => setCompanySettings({...companySettings, website: e.target.value})}
+                            placeholder="https://yourcompany.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="company-logo">Company Logo</Label>
+                          <div className="space-y-2">
+                            <Input
+                              id="company-logo"
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const reader = new FileReader()
+                                  reader.onload = (event) => {
+                                    if (event.target?.result) {
+                                      setCompanySettings({...companySettings, logoUrl: event.target.result as string})
+                                    }
+                                  }
+                                  reader.readAsDataURL(file)
+                                }
+                              }}
+                            />
+                            {companySettings.logoUrl && (
+                              <div className="mt-2">
+                                <img 
+                                  src={companySettings.logoUrl} 
+                                  alt="Company Logo" 
+                                  className="max-w-xs max-h-32 object-contain border rounded"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Bank Account Information */}
+                        <div className="border-t pt-4">
+                          <h3 className="text-lg font-medium mb-4">Bank Account Information</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="bank-name">Bank Name</Label>
+                              <Input
+                                id="bank-name"
+                                value={companySettings.bankName}
+                                onChange={(e) => setCompanySettings({...companySettings, bankName: e.target.value})}
+                                placeholder="Bank name"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="bank-account">Account Number</Label>
+                                <Input
+                                  id="bank-account"
+                                  value={companySettings.bankAccount}
+                                  onChange={(e) => setCompanySettings({...companySettings, bankAccount: e.target.value})}
+                                  placeholder="Account number"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="bank-code">Bank Code / SWIFT</Label>
+                                <Input
+                                  id="bank-code"
+                                  value={companySettings.bankCode}
+                                  onChange={(e) => setCompanySettings({...companySettings, bankCode: e.target.value})}
+                                  placeholder="Bank code or SWIFT"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Language Settings */}
+                        <div className="border-t pt-4">
+                          <h3 className="text-lg font-medium mb-4">Language Settings</h3>
+                          <div>
+                            <Label htmlFor="default-language">Default Invoice Language</Label>
+                            <Select value={companySettings.defaultLanguage} onValueChange={(value) => setCompanySettings({...companySettings, defaultLanguage: value})}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select default language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="lt">Lietuvių (Lithuanian)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="mt-4">
+                            <Label htmlFor="default-service">Default Service Description</Label>
+                            <Input
+                              id="default-service"
+                              value={companySettings.defaultServiceDescription}
+                              onChange={(e) => setCompanySettings({...companySettings, defaultServiceDescription: e.target.value})}
+                              placeholder="Window Cleaning Service"
+                            />
+                            <p className="text-sm text-gray-500 mt-1">This will be pre-filled when generating invoices</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3 pt-4">
+                          <Button 
+                            onClick={() => {
+                              // Save settings to localStorage
+                              localStorage.setItem('companySettings', JSON.stringify(companySettings))
+                              setIsSettingsDialogOpen(false)
+                              toast({
+                                title: "Settings Saved",
+                                description: "Company settings have been saved successfully.",
+                              })
+                            }}
+                            className="flex-1"
+                          >
+                            Save Settings
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setIsSettingsDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -1882,6 +2307,27 @@ TOTAL: $${selectedJob.price}
                                 )}
                               </SelectContent>
                             </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="invoice-language">Invoice Language</Label>
+                            <Select value={invoiceLanguage} onValueChange={setInvoiceLanguage}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select invoice language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="en">English</SelectItem>
+                                <SelectItem value="lt">Lietuvių (Lithuanian)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="invoice-service-description">Service Description</Label>
+                            <Input
+                              id="invoice-service-description"
+                              value={invoiceData.serviceDescription}
+                              onChange={(e) => setInvoiceData({...invoiceData, serviceDescription: e.target.value})}
+                              placeholder="Window Cleaning Service"
+                            />
                           </div>
                           <div>
                             <Label htmlFor="invoice-notes">Invoice Notes</Label>
