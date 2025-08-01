@@ -1533,8 +1533,9 @@ export default function WindowCleaningCRM() {
           ` : ''}
           
           <div class="footer">
-            <p class="thank-you">${t.thankYou}</p>
             ${paymentDate ? `<p>${t.paymentDate} ${paymentDate}</p>` : ''}
+            <p class="thank-you">${t.thankYou}</p>
+            
           </div>
         </body>
         </html>
