@@ -1279,7 +1279,7 @@ export default function WindowCleaningCRM() {
         bankName: "Bankas",
         account: "Sąskaita",
         bankCode: "Banko kodas/SWIFT",
-        paymentDate: "Mokėjimo terminas"
+        paymentDate: "Apmokėti iki"
       }
     }
 
@@ -1350,8 +1350,8 @@ export default function WindowCleaningCRM() {
               line-height: 1.6;
             }
             .company-logo {
-              max-width: 120px;
-              max-height: 50px;
+              max-width: 180px;
+              max-height: 75px;
               margin-bottom: 12px;
               display: block;
               margin-left: auto;
