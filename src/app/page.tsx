@@ -1222,7 +1222,7 @@ export default function WindowCleaningCRM() {
       notes: "",
       logoUrl: "",
       serviceDescription: companySettings.defaultServiceDescription || "Window Cleaning Service",
-      paymentDate: defaultPaymentDate.toISOString().split('T')[0]
+      paymentDate: defaultPaymentDate.toISOString().split('T')[0] // Keep as YYYY-MM-DD for input field
     })
     setInvoiceLanguage(companySettings.defaultLanguage || "en")
     setIsInvoiceDialogOpen(true)
@@ -1277,206 +1277,133 @@ export default function WindowCleaningCRM() {
     const t = translations[invoiceLanguage as keyof typeof translations] || translations.en
 
     try {
-      // Create a new PDF document
-      const pdf = new jsPDF()
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
+      // Create a temporary HTML element for better font rendering
+      const invoiceElement = document.createElement('div')
+      invoiceElement.style.fontFamily = 'Arial, sans-serif'
+      invoiceElement.style.width = '210mm'
+      invoiceElement.style.padding = '20mm'
+      invoiceElement.style.boxSizing = 'border-box'
+      invoiceElement.style.backgroundColor = 'white'
+      invoiceElement.style.position = 'absolute'
+      invoiceElement.style.left = '-9999px'
+      invoiceElement.style.top = '-9999px'
       
-      // Set up fonts and colors
-      // Use times font which has better Unicode support
-      pdf.setFont('times')
-      
-      // Add company logo if available
-      if (companySettings.logoUrl) {
-        try {
-          const imgData = companySettings.logoUrl
-          // Calculate aspect ratio to maintain proportions
-          const imgWidth = 60
-          const imgHeight = 25
-          pdf.addImage(imgData, 'JPEG', 15, 15, imgWidth, imgHeight)
-        } catch (error) {
-          console.error('Error adding logo to PDF:', error)
-        }
+      // Format dates in European format dd/mm/yyyy
+      const formatDate = (date: Date) => {
+        const day = date.getDate().toString().padStart(2, '0')
+        const month = (date.getMonth() + 1).toString().padStart(2, '0')
+        const year = date.getFullYear()
+        return `${day}/${month}/${year}`
       }
       
-      // Company information header
-      let yPos = 15
-      if (companySettings.logoUrl) {
-        yPos = 50
-      }
-      
-      pdf.setFontSize(20)
-      pdf.setFont('times', 'bold')
-      pdf.text(companySettings.name || 'Your Company', pageWidth - 15, yPos, { align: 'right' })
-      
-      yPos += 10
-      pdf.setFontSize(10)
-      pdf.setFont('times', 'normal')
-      
-      if (companySettings.address) {
-        const addressLines = companySettings.address.split('\n')
-        addressLines.forEach(line => {
-          pdf.text(line, pageWidth - 15, yPos, { align: 'right' })
-          yPos += 5
-        })
-      }
-      
-      if (companySettings.phone) {
-        pdf.text(`Phone: ${companySettings.phone}`, pageWidth - 15, yPos, { align: 'right' })
-        yPos += 5
-      }
-      
-      if (companySettings.email) {
-        pdf.text(`Email: ${companySettings.email}`, pageWidth - 15, yPos, { align: 'right' })
-        yPos += 5
-      }
-      
-      if (companySettings.website) {
-        pdf.text(`Website: ${companySettings.website}`, pageWidth - 15, yPos, { align: 'right' })
-        yPos += 5
-      }
-      
-      // Invoice title and details
-      yPos += 20
-      pdf.setFontSize(24)
-      pdf.setFont('times', 'bold')
-      pdf.text(t.invoice, 15, yPos)
-      
-      yPos += 15
-      pdf.setFontSize(12)
-      pdf.setFont('times', 'normal')
-      
-      const invoiceDate = new Date().toLocaleDateString()
+      const invoiceDate = formatDate(new Date())
       const invoiceNumber = `INV-${Date.now()}`
+      const serviceDate = formatDate(new Date(selectedJob.date))
+      const paymentDate = invoiceData.paymentDate ? formatDate(new Date(invoiceData.paymentDate)) : ''
       
-      pdf.text(`${t.date}: ${invoiceDate}`, 15, yPos)
-      yPos += 8
-      pdf.text(`${t.invoiceNumber}: ${invoiceNumber}`, 15, yPos)
+      // Build HTML content with proper Unicode support
+      invoiceElement.innerHTML = `
+        <div style="font-family: Arial, sans-serif; color: #000;">
+          <!-- Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+            <div>
+              <h1 style="font-size: 24px; margin: 0; color: #333;">${t.invoice}</h1>
+              <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.date}: ${invoiceDate}</p>
+              <p style="margin: 5px 0; font-size: 12px; color: #666;">${t.invoiceNumber}: ${invoiceNumber}</p>
+            </div>
+            <div style="text-align: right;">
+              <h2 style="font-size: 20px; margin: 0; color: #333;">${companySettings.name || 'Your Company'}</h2>
+              ${companySettings.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${companySettings.address.replace(/\n/g, '<br>')}</p>` : ''}
+              ${companySettings.phone ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Phone: ${companySettings.phone}</p>` : ''}
+              ${companySettings.email ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Email: ${companySettings.email}</p>` : ''}
+              ${companySettings.website ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">Website: ${companySettings.website}</p>` : ''}
+            </div>
+          </div>
+          
+          <!-- Bill To Section -->
+          <div style="margin-bottom: 30px;">
+            <h3 style="font-size: 14px; margin: 0 0 10px 0; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">${t.billTo}</h3>
+            <p style="margin: 5px 0; font-size: 12px; color: #333; font-weight: bold;">${selectedClientForInvoice.name}</p>
+            ${selectedClientForInvoice.address ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.address.replace(/\n/g, '<br>')}</p>` : ''}
+            ${selectedClientForInvoice.phone ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.phone}</p>` : ''}
+            ${selectedClientForInvoice.email ? `<p style="margin: 2px 0; font-size: 10px; color: #666;">${selectedClientForInvoice.email}</p>` : ''}
+          </div>
+          
+          <!-- Service Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+              <tr style="background-color: #f0f0f0;">
+                <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.description}</th>
+                <th style="padding: 8px; text-align: left; font-size: 12px; border: 1px solid #ddd;">${t.serviceDate}</th>
+                <th style="padding: 8px; text-align: right; font-size: 12px; border: 1px solid #ddd;">${t.amount}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${invoiceData.serviceDescription || t.windowCleaning}</td>
+                <td style="padding: 8px; font-size: 11px; border: 1px solid #ddd;">${serviceDate}</td>
+                <td style="padding: 8px; text-align: right; font-size: 11px; border: 1px solid #ddd;">$${selectedJob.price}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          ${invoiceData.notes ? `<p style="margin: 10px 0; font-size: 10px; color: #666;"><strong>${t.notes}:</strong> ${invoiceData.notes}</p>` : ''}
+          
+          <!-- Total -->
+          <div style="text-align: right; margin: 20px 0;">
+            <p style="font-size: 14px; font-weight: bold; color: #333; margin: 0;">${t.total}: $${selectedJob.price}</p>
+          </div>
+          
+          <!-- Bank Information -->
+          ${(companySettings.bankName || companySettings.bankAccount) ? `
+            <div style="margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee;">
+              <h4 style="font-size: 12px; margin: 0 0 8px 0; color: #333;">${t.bankInfo}</h4>
+              ${companySettings.bankName ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.bankName}:</strong> ${companySettings.bankName}</p>` : ''}
+              ${companySettings.bankAccount ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.account}:</strong> ${companySettings.bankAccount}</p>` : ''}
+              ${companySettings.bankCode ? `<p style="margin: 2px 0; font-size: 10px; color: #666;"><strong>${t.bankCode}:</strong> ${companySettings.bankCode}</p>` : ''}
+            </div>
+          ` : ''}
+          
+          <!-- Footer -->
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
+            <p style="margin: 5px 0; font-size: 10px; color: #666;">${t.thankYou}</p>
+            ${paymentDate ? `<p style="margin: 5px 0; font-size: 10px; color: #666;">${t.paymentDate} ${paymentDate}</p>` : ''}
+          </div>
+        </div>
+      `
       
-      // Bill to section
-      yPos += 20
-      pdf.setFontSize(14)
-      pdf.setFont('times', 'bold')
-      pdf.text(t.billTo, 15, yPos)
+      // Add to document body
+      document.body.appendChild(invoiceElement)
       
-      yPos += 10
-      pdf.setFontSize(12)
-      pdf.setFont('times', 'normal')
-      pdf.text(selectedClientForInvoice.name, 15, yPos)
-      yPos += 8
+      // Convert to canvas
+      const canvas = await html2canvas(invoiceElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      })
       
-      if (selectedClientForInvoice.address) {
-        const addressLines = selectedClientForInvoice.address.split('\n')
-        addressLines.forEach(line => {
-          pdf.text(line, 15, yPos)
-          yPos += 5
-        })
-      }
+      // Remove temporary element
+      document.body.removeChild(invoiceElement)
       
-      if (selectedClientForInvoice.phone) {
-        pdf.text(selectedClientForInvoice.phone, 15, yPos)
-        yPos += 8
-      }
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF()
+      const imgWidth = 210
+      const pageHeight = 295
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
       
-      if (selectedClientForInvoice.email) {
-        pdf.text(selectedClientForInvoice.email, 15, yPos)
-        yPos += 8
-      }
+      let position = 0
       
-      // Service details table
-      yPos += 10
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
       
-      // Table header
-      pdf.setFillColor(240, 240, 240)
-      pdf.rect(15, yPos, pageWidth - 30, 10, 'F')
-      
-      pdf.setFont('times', 'bold')
-      pdf.text(t.description, 20, yPos + 7)
-      pdf.text(t.serviceDate, 100, yPos + 7)
-      pdf.text(t.amount, pageWidth - 35, yPos + 7, { align: 'right' })
-      
-      yPos += 15
-      
-      // Table content
-      pdf.setFont('times', 'normal')
-      
-      // Handle Lithuanian characters by replacing them with ASCII equivalents
-      const serviceDescription = invoiceData.serviceDescription || t.windowCleaning
-      const cleanDescription = serviceDescription
-        .replace(/ą/g, 'a')
-        .replace(/č/g, 'c')
-        .replace(/ė/g, 'e')
-        .replace(/į/g, 'i')
-        .replace(/š/g, 's')
-        .replace(/ų/g, 'u')
-        .replace(/ū/g, 'u')
-        .replace(/ž/g, 'z')
-        .replace(/Ą/g, 'A')
-        .replace(/Č/g, 'C')
-        .replace(/Ė/g, 'E')
-        .replace(/Į/g, 'I')
-        .replace(/Š/g, 'S')
-        .replace(/Ų/g, 'U')
-        .replace(/Ū/g, 'U')
-        .replace(/Ž/g, 'Z')
-      
-      pdf.text(cleanDescription, 20, yPos)
-      pdf.text(new Date(selectedJob.date).toLocaleDateString(), 100, yPos)
-      pdf.text(`$${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
-      
-      yPos += 8
-      
-      if (invoiceData.notes) {
-        pdf.setFontSize(10)
-        pdf.text(`${t.notes} ${invoiceData.notes}`, 20, yPos)
-        yPos += 8
-      }
-      
-      // Total line
-      yPos += 10
-      pdf.setDrawColor(0, 0, 0)
-      pdf.line(15, yPos, pageWidth - 15, yPos)
-      yPos += 8
-      
-      pdf.setFontSize(14)
-      pdf.setFont('times', 'bold')
-      pdf.text(`${t.total} $${selectedJob.price}`, pageWidth - 35, yPos, { align: 'right' })
-      
-      // Bank information (if available)
-      if (companySettings.bankName || companySettings.bankAccount) {
-        yPos += 20
-        pdf.setFontSize(12)
-        pdf.setFont('times', 'bold')
-        pdf.text(t.bankInfo, 15, yPos)
-        
-        yPos += 10
-        pdf.setFontSize(10)
-        pdf.setFont('times', 'normal')
-        
-        if (companySettings.bankName) {
-          pdf.text(`${t.bankName} ${companySettings.bankName}`, 15, yPos)
-          yPos += 6
-        }
-        
-        if (companySettings.bankAccount) {
-          pdf.text(`${t.account} ${companySettings.bankAccount}`, 15, yPos)
-          yPos += 6
-        }
-        
-        if (companySettings.bankCode) {
-          pdf.text(`${t.bankCode} ${companySettings.bankCode}`, 15, yPos)
-          yPos += 6
-        }
-      }
-      
-      // Footer notes
-      yPos += 15
-      pdf.setFontSize(10)
-      pdf.setFont('times', 'normal')
-      pdf.text(t.thankYou, 15, yPos)
-      yPos += 5
-      if (invoiceData.paymentDate) {
-        pdf.text(`${t.paymentDate} ${new Date(invoiceData.paymentDate).toLocaleDateString()}`, 15, yPos)
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
       }
       
       // Save the PDF
@@ -1499,7 +1426,7 @@ export default function WindowCleaningCRM() {
       toast({
         title: invoiceLanguage === 'lt' ? "Klaida" : "Error",
         description: invoiceLanguage === 'lt' 
-          ? "Nepavyko sugeneruoti PDF sąskaitos. Badykite dar kartą."
+          ? "Nepavyko sugeneruoti PDF sąskaitos. Bandykite dar kartą."
           : "Failed to generate PDF invoice. Please try again.",
         variant: "destructive",
       })
